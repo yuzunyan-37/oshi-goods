@@ -93,6 +93,10 @@ label input[type=file]{display:block;position:absolute;inset:0;width:100%;height
 .gq{margin-top:8px;background:rgba(255,255,255,.14)!important;border-color:rgba(255,255,255,.35)!important;color:#fff!important}.gq::placeholder{color:rgba(255,255,255,.65)}
 .gl{margin-top:6px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
 .gr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.12);color:#fff;font-size:14px;text-align:left}.gr small{font-size:11px;opacity:.8;flex:none}.gr.on{background:var(--pk);color:var(--on)}
+.gch{display:flex;gap:6px;overflow-x:auto;margin-top:8px}.gch button{flex:none;border-radius:99px;padding:5px 11px;font-size:12px;background:rgba(255,255,255,.18);color:#fff}
+.gr b{flex:1;min-width:0;font-weight:600}
+.lnk{display:block;width:100%;margin-top:6px;padding:8px;background:none;color:#fff;font-size:13px;text-decoration:underline}
+.cn{font-size:11px;line-height:1.55;opacity:.92;margin-top:8px}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -200,14 +204,93 @@ function rm(id){if(!armed){armed=true;$('#dl').textContent='もう一度押す�
 $('#S').addEventListener('click',e=>{if(e.target.id==='S')closeS()});
 
 /* ---- アプリ内カメラ ---- */
-const GEN=[
-['缶バッジ 25mm',25,25,1,'かんばっじ カンバッジ'],['缶バッジ 32mm',32,32,1,'かんばっじ カンバッジ'],['缶バッジ 38mm',38,38,1,'かんばっじ カンバッジ'],['缶バッジ 44mm',44,44,1,'かんばっじ カンバッジ'],
-['缶バッジ 54mm',54,54,1,'かんばっじ カンバッジ'],['缶バッジ 57mm',57,57,1,'かんばっじ カンバッジ'],['缶バッジ 65mm',65,65,1,'かんばっじ カンバッジ'],['缶バッジ 75mm',75,75,1,'かんばっじ カンバッジ'],
-['トレカ・カード',63,88,0,'とれか かーど ぶろまいど'],['ブロマイド L判',89,127,0,'ぶろまいど 写真 L'],['ブロマイド 2L判',127,178,0,'ぶろまいど 写真 2L'],['ポストカード',100,148,0,'ぽすかど はがき'],
-['色紙',242,273,0,'しきし'],['クリアファイル A4',210,297,0,'くりあふぁいる ふぁいる くりふぁ',1],['ポスター A3',297,420,0,'ぽすたー',0],['ポスター B2',515,728,0,'ぽすたー',0],
-['アクリルスタンド 小',50,80,0,'あくすた あくりるすたんど',1],['アクリルスタンド 中',80,120,0,'あくすた あくりるすたんど',1],['アクリルスタンド 大',100,160,0,'あくすた あくりるすたんど',1],
-['アクリルキーホルダー',50,50,0,'あくきー あくりる きーほるだー',1],['ステッカー・シール',60,60,0,'すてっかー しーる',1],['ぬいぐるみマスコット',100,130,0,'ぬいぐるみ ますこっと ぬい',1],
-['タオル',340,800,0,'たおる',1],['トートバッグ',350,380,0,'とーと ばっぐ かばん',1]];
+const RAW=[
+['缶バッジ 25mm',25,25,'c','かんばっじ カンバッジ'],
+['缶バッジ 32mm',32,32,'c','かんばっじ カンバッジ'],
+['缶バッジ 38mm',38,38,'c','かんばっじ カンバッジ'],
+['缶バッジ 44mm',44,44,'c','かんばっじ カンバッジ'],
+['缶バッジ 54mm',54,54,'c','かんばっじ カンバッジ 55mm'],
+['缶バッジ 57mm',57,57,'c','かんばっじ カンバッジ 56mm 58mm 缶ミラー かんみらー'],
+['缶バッジ 65mm',65,65,'c','かんばっじ カンバッジ'],
+['缶バッジ 75mm',75,75,'c','かんばっじ カンバッジ 76mm 缶ミラー かんみらー'],
+['缶バッジ 88mm',88,88,'c','かんばっじ カンバッジ'],
+['缶バッジ 100mm',100,100,'c','かんばっじ カンバッジ びっぐ'],
+['缶バッジ 長方形',54,80,'r','かんばっじ カンバッジ 角丸 51x76 かくかんばっじ'],
+['角缶バッジ・キーホルダー 40mm',40,40,'s','かくかんばっじ 缶バッジ ひし形 四角形 あくきー キーホルダー'],
+['キーホルダー・アクリルブロック 50mm',50,50,'s','あくきー きーほるだー あくりるぶろっく',1],
+['アクリルスタンド・ブロック 60mm',60,60,'s','あくすた あくりるすたんど あくりるぶろっく ゆらゆら',1],
+['アクリルブロック 80mm',80,80,'s','あくりるぶろっく',1],
+['アクリルスタンド ミニ',39,44,'r','あくすた あくりるすたんど',1],
+['アクリルスタンド 中・アクリルカード',60,70,'r','あくすた あくりるすたんど あくりるかーど あくりるぷれーと',1],
+['アクリルスタンド 120mm',80,120,'r','あくすた あくりるすたんど',1],
+['アクリルスタンド 大',94,150,'r','あくすた あくりるすたんど',1],
+['アクリルスタンド BIG',72,198,'r','あくすた あくりるすたんど びっぐ',1],
+['キーホルダー・ストラップ 小',40,60,'r','あくきー らばすと ラバーストラップ きーほるだー あくりる らばー',1],
+['キーホルダー・ストラップ 中',50,75,'r','あくきー らばすと ラバーストラップ きーほるだー あくりる らばー',1],
+['キーホルダー・ストラップ 大',60,90,'r','あくきー らばすと ラバーストラップ きーほるだー あくりる らばー',1],
+['コースター 円 90mm',90,90,'c','こーすたー あくりる らばー 雑貨',1],
+['コースター 角 90mm',90,90,'s','こーすたー あくりる らばー 雑貨',1],
+['お皿・プレート 200mm',200,200,'c','おさら ぷれーと 雑貨',1],
+['名刺サイズ・ミニカード',55,91,'r','めいし みにかーど 紙もの'],
+['トレカ・カード',63,88,'r','とれか とれーでぃんぐかーど かーど 紙もの'],
+['カードスリーブ',66,91,'r','すりーぶ 紙もの',1],
+['トレカケース・トップローダー',70,100,'r','とれかけーす とっぷろーだー 雑貨',1],
+['ポストカード・ブロマイド KG',100,148,'r','ぽすとかーど はがき ぶろまいど 写真 kg 102x152 紙もの'],
+['ブロマイド L判',89,127,'r','ぶろまいど 写真 l判 紙もの'],
+['ブロマイド 2L判',127,178,'r','ぶろまいど 写真 2l判 紙もの'],
+['写真 六切',203,254,'r','ろくきり 写真 ぶろまいど 紙もの'],
+['写真 四切',254,305,'r','よつぎり 写真 ぶろまいど 紙もの'],
+['色紙',242,273,'r','しきし 紙もの'],
+['しおり',40,150,'r','しおり ぶっくまーく 紙もの',1],
+['A6・文庫サイズ(ノート・メモ帳)',105,148,'r','えーろく ぶんこ のーと めもちょう 紙もの'],
+['B6(ノート)',128,182,'r','びーろく のーと 紙もの'],
+['A5(ノート・クリアファイル)',148,210,'r','えーご のーと くりあふぁいる くりふぁ 紙もの'],
+['B5(ノート)',182,257,'r','びーご のーと 紙もの'],
+['A4(クリアファイル・アクリルパネル)',210,297,'r','えーよん くりあふぁいる くりふぁ あくりるぱねる ぽすたー 紙もの 220x310',1],
+['B4(ポスター)',257,364,'r','びーよん ぽすたー 紙もの'],
+['A3(ポスター)',297,420,'r','えーすりー ぽすたー 紙もの'],
+['B3(ポスター)',364,515,'r','びーすりー ぽすたー 紙もの'],
+['A2(ポスター・タペストリー)',420,594,'r','えーつー ぽすたー たぺすとりー 紙もの'],
+['B2(ポスター・タペストリー)',515,728,'r','びーつー ぽすたー たぺすとりー 紙もの 730x520'],
+['A1(ポスター)',594,841,'r','えーわん ぽすたー 紙もの'],
+['B1(ポスター)',728,1030,'r','びーわん ぽすたー 紙もの'],
+['ラバーマット・プレイマット',350,600,'r','らばーまっと ぷれいまっと でぃーすくまっと 雑貨',1],
+['マウスパッド(小)',180,220,'r','まうすぱっど 雑貨',1],
+['スマホケース',75,155,'r','すまほけーす あいふぉん 雑貨',1],
+['パスケース・カードケース',70,105,'r','ぱすけーす かーどけーす 雑貨',1],
+['ハンドタオル・ハンカチ',250,250,'s','たおる はんかち 雑貨',1],
+['フェイスタオル',340,800,'r','ふぇいすたおる たおる 雑貨',1],
+['バスタオル',600,1200,'r','ばすたおる たおる 雑貨',1],
+['マグカップ(正面)',80,95,'o','まぐかっぷ こっぷ 雑貨',1],
+['タンブラー・ボトル(正面)',70,160,'o','たんぶらー ぼとる すいとう 雑貨',1],
+['ステッカー・シール',1,1,'f','すてっかー しーる ふれーくしーる 紙もの'],
+['ぬいぐるみ',1,1,'f','ぬいぐるみ ぬい ぬいぱる ちびぐるみ ますこっと もふもふ'],
+['クッション',1,1,'f','くっしょん 雑貨'],
+['抱き枕',1,3,'f','だきまくら 雑貨'],
+['ブランケット・ひざ掛け',4,3,'f','ぶらんけっと ひざかけ 雑貨'],
+['フィギュア',3,4,'f','ふぃぎゅあ ねんどろいど ぷらいす すけーる'],
+['ガチャ・カプセルトイ',1,1,'f','がちゃ かぷせる かぷせるとい'],
+['ワッペン・パッチ',1,1,'f','わっぺん ぱっち 刺繍'],
+['アクセサリー(ネックレス・指輪・ヘアゴム等)',1,1,'f','あくせさりー ねっくれす ゆびわ へあごむ ばれった'],
+['文房具(ペン・消しゴム等)',4,3,'f','ぶんぼうぐ ぺん けしごむ えんぴつ 雑貨'],
+['ペンケース・ポーチ',4,3,'f','ぺんけーす ぽーち ばっぐ'],
+['トートバッグ',4,5,'f','とーと ばっぐ かばん'],
+['ショルダーバッグ・リュック',4,5,'f','しょるだー りゅっく ばっぐ かばん'],
+['エコバッグ・巾着',4,5,'f','えこばっぐ きんちゃく ばっぐ'],
+['Tシャツ',1,1,'f','てぃーしゃつ ふく 服 衣類'],
+['パーカー・ジャケット',1,1,'f','ぱーかー じゃけっと ふく 服 衣類'],
+['帽子・キャップ',1,1,'f','ぼうし きゃっぷ ふく 服 衣類'],
+['靴下・手袋・マフラー',1,1,'f','くつした てぶくろ まふらー ふく 服 衣類'],
+['エプロン・衣装',3,4,'f','えぷろん いしょう こすぷれ ふく 服 衣類'],
+['傘',1,3,'f','かさ あまがさ 雑貨'],
+['うちわ・ペンライト',3,4,'f','うちわ ぺんらいと らいぶ 雑貨'],
+['のぼり・フラッグ',1,2,'f','のぼり ふらっぐ はた'],
+['時計・小型家電',1,1,'f','とけい かでん 雑貨'],
+['お菓子・食品・缶',1,1,'f','おかし しょくひん かん 雑貨']];
+const GEN=[];RAW.forEach(([n,w,h,k,a,ap])=>{a=a||'';
+  if(k==='r'){const p=Math.min(w,h),q=Math.max(w,h);GEN.push([n+' 縦',p,q,0,a+' たて 縦',ap||0,0]);GEN.push([n+' 横',q,p,0,a+' よこ 横',ap||0,0])}
+  else GEN.push([n,w,h,k==='c'?1:0,a,ap||0,k==='f'?1:0])});
+const CH=['缶バッジ','アクリル','紙もの','キーホルダー','ぬいぐるみ','服','バッグ','雑貨'];
 const HIRA=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
 let cq='';
 const getRec=()=>{try{return JSON.parse(localStorage.getItem('oshi-recent')||'[]').filter(n=>GEN.some(g=>g[0]===n))}catch(e){return[]}};
@@ -227,26 +310,33 @@ function closeCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=nu
 function cSel(m){cpm=cpm===m?'':m;if(cpm==='kind'){cq='';cpg=cg}camBar()}
 function cGen(i){cpg=i;genList();const b=$('#ap');if(b)b.disabled=false}
 function cFind(v){cq=v;genList()}
+function cChip(i){cq=CH[i];const q=$('#gq');if(q)q.value=cq;genList()}
+function cClear(){cm='';cg=-1;cpm='';camBar();frame()}
+const gsz=g=>g[6]?'撮影範囲(枠なし)':g[3]?'直径'+g[1]+'mm':(g[5]?'約':'')+g[1]+'×'+g[2]+'mm';
 function genList(){const L=$('#gl');if(!L)return;const t=HIRA(cq).split(/\s+/).filter(Boolean),rec=getRec();
   let ix=GEN.map((g,i)=>i);
   if(t.length)ix=ix.filter(i=>{const h=HIRA(GEN[i][0]+' '+GEN[i][4]),h2=h.replace(/\s/g,'');return t.every(w=>h.includes(w)||h2.includes(w))});
   const ri=rec.map(n=>GEN.findIndex(g=>g[0]===n)).filter(i=>ix.includes(i)),rest=ix.filter(i=>!ri.includes(i));
-  const row=(i,r)=>{const g=GEN[i];return `<button class="gr ${cpg===i?'on':''}" onclick="cGen(${i})"><b>${esc(g[0])}</b><small>${r?'最近 ・ ':''}${g[3]?'直径'+g[1]+'mm':(g[5]?'約':'')+g[1]+'×'+g[2]+'mm'}</small></button>`};
-  L.innerHTML=ix.length?ri.map(i=>row(i,1)).join('')+rest.map(i=>row(i)).join(''):'<p class="chint">該当する種類がありません。</p>'}
+  const row=(i,r)=>{const g=GEN[i];return `<button class="gr ${cpg===i?'on':''}" onclick="cGen(${i})"><b>${esc(g[0])}</b><small>${r?'最近 ・ ':''}${gsz(g)}</small></button>`};
+  L.innerHTML=ix.length?ri.map(i=>row(i,1)).join('')+rest.map(i=>row(i)).join(''):'<p class="chint">該当する種類がありません。別の言葉でも探してみてください。</p>'}
 function cApply(){cm=cpm;cg=cm==='kind'?cpg:-1;if(cg>=0){try{localStorage.setItem('oshi-recent',JSON.stringify([GEN[cg][0],...getRec().filter(n=>n!==GEN[cg][0])].slice(0,6)))}catch(e){}}cpm='';camBar();frame()}
-function camBar(){const sum=cm==='kind'&&cg>=0?GEN[cg][0]+'の枠':cm==='text'?'詳細(文字)':'指定なし';
+function camBar(){const sum=cm==='kind'&&cg>=0?GEN[cg][0]:cm==='text'?'詳細(文字)':'指定なし';
   let h=`<div class="seg"><button class="${cpm==='kind'?'on':''}" onclick="cSel('kind')">種類を選んで枠で撮る</button><button class="${cpm==='text'?'on':''}" onclick="cSel('text')">詳細(文字)で探す</button></div>`;
-  if(cpm==='kind')h+=`<input type="search" id="gq" class="gq" value="${esc(cq)}" placeholder="種類を検索(例:缶バッジ 44)" oninput="cFind(this.value)" autocomplete="off"><div id="gl" class="gl"></div>`;
+  if(cpm==='kind')h+=`<input type="search" id="gq" class="gq" value="${esc(cq)}" placeholder="種類を検索(例:缶バッジ 44、あくすた)" oninput="cFind(this.value)" autocomplete="off"><div class="gch">${CH.map((w,i)=>`<button onclick="cChip(${i})">${w}</button>`).join('')}</div><div id="gl" class="gl"></div>`;
   else if(cpm==='text')h+='<p class="chint">シールや説明文が写るように撮影します。</p>';
-  if(cpm)h+=`<button class="pri" id="ap" style="margin-top:8px" onclick="cApply()" ${cpm==='kind'&&cpg<0?'disabled':''}>適用</button>`;
-  else h+=`<div class="shr"><span class="sum">${sum}</span><button class="shut" onclick="shoot()" aria-label="撮影"></button><span></span></div>`;
+  if(cpm)h+=`<button class="pri" id="ap" style="margin-top:8px" onclick="cApply()" ${cpm==='kind'&&cpg<0?'disabled':''}>適用</button><button class="lnk" onclick="cClear()">指定なしで普通に撮る</button>`;
+  else{if(cm==='kind'&&cg>=0)h+=`<p class="cn">${GEN[cg][6]?'枠なしの種類です。点線の範囲に全体がしっかり入るように、正面から撮影してください。':'しっかり枠に合わせて、正面から撮影してください。(正面以外だと精度が下がります)'}<br>開発中の機能のため、合う枠が見つからない場合や使いにくい場合は、「指定なし」で普通に撮るか、「詳細(文字)」で探すのがおすすめです。</p>`;
+    h+=`<div class="shr"><span class="sum">${esc(sum)}</span><button class="shut" onclick="shoot()" aria-label="撮影"></button><span></span></div>`}
   $('#cb').innerHTML=h;if(cpm==='kind')genList();vvFix()}
-function vvFix(){const c=$('#cam');if(!c)return;const h=window.visualViewport?visualViewport.height:innerHeight;c.style.height=h+'px';const L=$('#gl');if(L)L.style.maxHeight=Math.max(96,Math.round(h*.27))+'px';frame()}
-function frame(){const f=$('#fr'),c=$('#fcap'),R=$('#cam');if(!f||!R)return;const r=R.getBoundingClientRect(),b=$('#cb'),bh=b?b.offsetHeight:0,cy=Math.max(r.height*.3,(r.height-bh)/2);
+function vvFix(){const c=$('#cam');if(!c)return;const h=window.visualViewport?visualViewport.height:innerHeight;c.style.height=h+'px';const L=$('#gl');if(L)L.style.maxHeight=Math.max(96,Math.round(h*.24))+'px';frame()}
+function frame(){const f=$('#fr'),c=$('#fcap'),R=$('#cam');if(!f||!R)return;const r=R.getBoundingClientRect(),b=$('#cb'),bh=b?b.offsetHeight:0,av=r.height-bh,cy=Math.max(r.height*.3,av/2);
   if(cm!=='kind'||cg<0){f.style.display='none';c.textContent=cm==='text'?'文字が読める距離で撮影してください':'';c.style.top=cy+'px';return}
-  const[n,w,h,ci,,ap]=GEN[cg],fr=Math.min(.78,.28+Math.max(w,h)/120*.5),k=Math.min(r.width*.9/w,(r.height-bh)*.8/h)*(fr/.78),fw=w*k,fh=h*k;
-  Object.assign(f.style,{display:'block',top:cy+'px',width:fw+'px',height:fh+'px',borderRadius:ci?'50%':'8px'});
-  c.textContent=n+'(実寸 '+(ci?'直径'+w:w+'×'+h)+'mm'+(ap?'・目安':'')+')の線に合わせて撮影';c.style.top=(cy+fh/2+10)+'px'}
+  const[n,w,h,ci,,ap,fr0]=GEN[cg];let k;
+  if(fr0)k=Math.min(r.width*.88/w,av*.78/h);
+  else{const L=Math.max(w,h),fr=Math.min(.78,.3+.48*Math.log(L/20)/Math.log(1030/20));k=Math.min(r.width*.9/w,av*.8/h)*(fr/.78)}
+  const fw=w*k,fh=h*k;
+  Object.assign(f.style,{display:'block',top:cy+'px',width:fw+'px',height:fh+'px',borderRadius:ci?'50%':'8px',borderStyle:fr0?'dashed':'solid'});
+  c.textContent=fr0?n+':枠なし。点線の範囲に全体が入るように撮影':n+'('+(ci?'直径'+w:w+'×'+h)+'mm'+(ap?'・目安':'')+')の線に合わせて撮影';c.style.top=(cy+fh/2+10)+'px'}
 function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   const vw=v.videoWidth,vh=v.videoHeight,R=$('#cam').getBoundingClientRect();let sx=0,sy=0,sw=vw,sh=vh;
   if(cm==='kind'&&cg>=0){const r=$('#fr').getBoundingClientRect(),sc=Math.max(R.width/vw,R.height/vh),ox=(vw*sc-R.width)/2,oy=(vh*sc-R.height)/2,m=1.08,cx=r.left-R.left+r.width/2,cy=r.top-R.top+r.height/2;
