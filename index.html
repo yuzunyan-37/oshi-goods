@@ -101,6 +101,7 @@ label input[type=file]{display:block;position:absolute;inset:0;width:100%;height
 .ta{display:block;width:100%;font:inherit;padding:11px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--card);color:var(--tx);resize:none;overflow:hidden;line-height:1.5;overflow-wrap:anywhere}
 label.fl{display:flex;justify-content:space-between;gap:8px}label.fl span+span{font-size:11px}
 .kv{margin-top:10px}.kv small{display:block;color:var(--sub);font-size:11px}.kv div{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+input[type=number]::placeholder{color:var(--sub);opacity:.75}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -152,7 +153,7 @@ notice(){return `<button class="bk" onclick="go('me')">‹ マイページ</butt
 acc(){return `<button class="bk" onclick="openSet()">‹ 設定</button><h1>アカウント</h1><div class="rb" style="opacity:.55"><span>Googleアカウントと連携</span><small>準備中</small></div>`},
 set(){const o=[['auto','端末に合わせる','スマホの設定に合わせて切り替わります。'],['light','ライトモード','明るい配色で表示します。'],['dark','ダークモード','暗い配色で表示します。']];
 return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>設定</h1><button class="rb" onclick="go('acc')"><span>${ic('user',20)} アカウント</span><small>›</small></button><h2>表示モード</h2>${o.map(([k,n,d])=>`<button class="rb" onclick="pickM('${k}')" aria-pressed="${pm===k}"><span>${n}${mode===k?'(使用中)':''}<br><small>${d}</small></span><b style="color:var(--ac)">${pm===k?ic('check',20):''}</b></button>`).join('')}<p class="sub" style="margin:10px 0 0">ライトはパステル、ダークはダスティな色合いになります。白と黒のテーマは変わりません。</p><button class="pri" onclick="applyMode()" ${pm===mode?'disabled':''}>適用</button>`},
-find(){return `<h1>検索</h1><input type="search" id="q" placeholder="商品名・キャラ名・作品名" oninput="doFind(this.value)"><div id="sr" style="margin-top:12px"></div>`},
+find(){return `<h1>検索</h1><textarea id="q" class="ta" rows="1" placeholder="商品名・キャラ名・作品名など" oninput="ag(this);doFind(this.value)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><div id="sr" style="margin-top:12px"></div>`},
 me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
 };
 function doFind(v){v=v.trim().toLowerCase();const r=v?items.filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
@@ -181,7 +182,7 @@ function candHTML(r){return r.length?r.map(x=>`<button class="hit" onclick="deta
 function kwIn(v){kw=v;$('#cl').innerHTML=candHTML(cands())}
 function review(){const T2={check:'同じものがあるか確認',add:'登録済みに同じものがないか確認',wish:'すでに持っていないか確認'}[rmode];
   const go2={check:['見つからない → この写真で新規登録','add(true)'],add:['同じものはない → この画像で登録に進む','add(true)'],wish:['持っていない → 購入予定の登録に進む','add(true,true)']}[rmode];
-  sheet(`<h2 style="margin-top:0">${T2}</h2><img class="pv" src="${tmp.img}" alt="選んだ画像">${tmp.genre?`<p class="sub" style="margin-top:8px">種類:${esc(tmp.genre)}(同じ種類のグッズを優先して探します)</p>`:''}${tmp.text?'<p class="sub" style="margin-top:8px">詳細モード:シールや説明文を見ながら、下のキーワード欄に入力して探せます。文字の自動読み取りは今後追加予定です。</p>':''}<h2>似ている候補</h2><p class="sub">タップすると詳細が開きます。同じものがあるか確認してください。</p><div id="cl">${candHTML(cands())}</div><h2>キーワードでさらに探す</h2><p class="sub">グッズ名・作品名・キャラ名・説明など、分かることを入れてください。詳しく入れるほど、合うものが上に出ます。</p><input type="search" id="kw" value="${esc(kw)}" placeholder="例:星のしずく ユキ ぬいぐるみ" oninput="kwIn(this.value)"><button class="pri ghost" onclick="${go2[1]}">${go2[0]}</button>`)}
+  sheet(`<h2 style="margin-top:0">${T2}</h2><img class="pv" src="${tmp.img}" alt="選んだ画像">${tmp.genre?`<p class="sub" style="margin-top:8px">種類:${esc(tmp.genre)}(同じ種類のグッズを優先して探します)</p>`:''}${tmp.text?'<p class="sub" style="margin-top:8px">詳細モード:シールや説明文を見ながら、下のキーワード欄に入力して探せます。文字の自動読み取りは今後追加予定です。</p>':''}<h2>似ている候補</h2><p class="sub">タップすると詳細が開きます。同じものがあるか確認してください。</p><div id="cl">${candHTML(cands())}</div><h2>キーワードでさらに探す</h2><p class="sub">グッズ名・作品名・キャラ名・説明など、分かることを入れてください。詳しく入れるほど、合うものが上に出ます。</p><textarea id="kw" class="ta" rows="1" placeholder="例:星のしずく ユキ ぬいぐるみ" oninput="ag(this);kwIn(this.value)" onkeydown="if(event.key==='Enter')event.preventDefault()">${esc(kw)}</textarea><button class="pri ghost" onclick="${go2[1]}">${go2[0]}</button>`);document.querySelectorAll('.ta').forEach(ag)}
 const FLD=[['n','タイトル',50,'自分が一目で分かる名前(例:缶バッジ(A))'],['w','作品名',100,'作品のタイトル(例:星のしずく)'],['c','キャラクター名',200,'複数キャラクターの名前も入力できます(例:ユキ、ハル)'],['g','グッズの種類',100,'正式名称や分かりやすい呼び方(例:缶バッジ 44mm)'],['sh','入手先・販売元',150,'イベント、店舗、販売元など'],['pd','発売時期・販売期間',300,'発売日、受注期間、発送予定など'],['pr','定価',50,'商品の定価(例:1,100円)'],['sz','サイズ',100,'縦×横など、具体的な寸法(例:44mm)'],['m','自由記入欄',1000,'補足情報や自分用のメモ(検索にも使われます)']];
 const DL=[['work','作品名'],['chara','キャラクター名'],['genre','グッズの種類'],['shop','入手先・販売元'],['period','発売時期・販売期間'],['price','定価'],['size','サイズ'],['memo','自由記入欄']];
 const detRows=i=>DL.filter(([k])=>i[k]).map(([k,l])=>`<div class="kv"><small>${l}</small><div>${esc(i[k])}</div></div>`).join('');
@@ -192,21 +193,35 @@ function add(useTmp,wd){if(!useTmp){tmp=null;kw=''}
   sheet(`<h2 style="margin-top:0">グッズを登録</h2>${tmp?`<img class="pv" src="${tmp.img}" alt="">`:''}<div style="display:flex;gap:8px"><label class="btn ghost" style="margin-top:0">${ic('camera',18)} ${tmp?'撮り直す':'撮影'}<input type="file" accept="image/*" capture="environment" hidden onchange="pick(this.files[0])"></label><label class="btn ghost" style="margin-top:0">${ic('image',18)} 選ぶ<input type="file" accept="image/*" hidden onchange="pick(this.files[0])"></label></div>
   <p class="sub" style="margin-top:10px">すべて空でも保存できます。分かるところだけ入力してください。</p>
   ${FLD.map(f=>fldHTML(f,pre[f[0]])).join('')}
-  <label class="f" for="q">個数</label><input type="number" id="q" value="1" min="1">
+  <label class="f" for="q">個数</label>${qHTML(1)}
   <label class="f"><input type="checkbox" id="wi"${wd?' checked':''}> 購入予定にする(まだ持っていない)</label>
   <button class="pri" onclick="saveItem()">登録する</button><p class="sub" id="er" style="color:#d6456b"></p>`);
   document.querySelectorAll('.ta').forEach(ag)}
+const qHTML=v=>`<input type="number" id="q" value="${v}" min="1" inputmode="numeric" data-prev="${v}" placeholder="前回の個数: ${v}" onfocus="qp(this)">`;
+function qp(e){if(e.value)e.dataset.prev=e.value;e.placeholder='前回の個数: '+(e.dataset.prev||'1')}
+function editItem(id){const i=items.find(x=>x.id===id);if(!i)return;
+  const val={n:i.name==='(名前なし)'?'':i.name,w:i.work,c:i.chara,g:i.genre,sh:i.shop,pd:i.period,pr:i.price,sz:i.size,m:i.memo};
+  sheet(`<h2 style="margin-top:0">グッズを編集</h2>${i.img?`<img class="pv" src="${i.img}" alt="">`:''}
+  <p class="sub" style="margin-top:10px">すべて空でも保存できます。</p>
+  ${FLD.map(f=>fldHTML(f,val[f[0]])).join('')}
+  <label class="f" for="q">個数</label>${qHTML(i.qty)}
+  <label class="f"><input type="checkbox" id="wi"${i.wish?' checked':''}> 購入予定にする(まだ持っていない)</label>
+  <button class="pri" onclick="saveEdit('${i.id}')">保存する</button><button class="pri ghost" onclick="detail('${i.id}')">キャンセル</button>`);
+  document.querySelectorAll('.ta').forEach(ag)}
+function saveEdit(id){const i=items.find(x=>x.id===id);if(!i)return;const v=k=>$('#'+k).value.trim(),g=v('g');
+  Object.assign(i,{name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('m'),qty:Math.max(1,parseInt($('#q').value)||i.qty||1),wish:$('#wi').checked});
+  put(i);render();detail(id)}
 const FK=['n','w','c','g','sh','pd','pr','sz','m','q','wi'];
 async function pick(f){if(!f)return;const keep=FK.map(k=>{const e=$('#'+k);return e?(k==='wi'?e.checked:e.value):''});
   try{tmp=await proc(f)}catch(e){return}
-  add(true);FK.forEach((k,j)=>{const e=$('#'+k);if(!e)return;if(k==='wi')e.checked=keep[j];else{e.value=keep[j];if(e.classList.contains('ta'))ag(e)}})}
+  add(true);FK.forEach((k,j)=>{const e=$('#'+k);if(!e)return;if(k==='wi')e.checked=keep[j];else{e.value=keep[j];if(e.classList.contains('ta'))ag(e);if(k==='q')qp(e)}})}
 function saveItem(){const v=k=>$('#'+k).value.trim(),g=v('g');
   const i={id:Date.now().toString(36),name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('m'),qty:Math.max(1,parseInt($('#q').value)||1),wish:$('#wi').checked,img:tmp?tmp.img:'',feat:tmp?tmp.feat:null,at:Date.now()};
   items.unshift(i);put(i);tmp=null;kw='';closeS();render()}
 function detail(id,fr){const i=items.find(x=>x.id===id);if(!i)return;armed=false;
   sheet(`${fr?'<button class="bk" onclick="review()">‹ 確認画面に戻る</button>':''}${i.img?`<img class="pv" src="${i.img}" alt="">`:'<div class="pv ph">'+ic('gift',64)+'</div>'}<h2>${esc(i.name)}</h2>${detRows(i)}
   ${i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qty('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qty('${i.id}',1)" aria-label="増やす">＋</button></div>`}
-  <button class="pri danger" id="dl" onclick="rm('${i.id}')">削除する</button>`)}
+  <button class="pri ghost" onclick="editItem('${i.id}')">${ic('edit',18)} 編集する</button><button class="pri danger" id="dl" onclick="rm('${i.id}')">削除する</button>`)}
 function qty(id,d){const i=items.find(x=>x.id===id);i.qty=Math.max(1,i.qty+d);put(i);$('#qn').textContent='×'+i.qty;render()}
 function own1(id){const i=items.find(x=>x.id===id);i.wish=false;put(i);closeS();render()}
 function rm(id){if(!armed){armed=true;$('#dl').textContent='もう一度押すと削除します';return}items=items.filter(x=>x.id!==id);del(id);closeS();render()}
@@ -360,7 +375,7 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.5(11/11 登録欄を追加)';
+const APP_VER='v1.6(11/11 編集・前回の個数)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -374,6 +389,7 @@ palette:'<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2.2-2.5 1.6-2.5H17a4
 gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
 bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
 gift:'<path d="M3 9h18v3H3z"/><path d="M5 12v8h14v-8M12 9v11"/><path d="M12 9c-1-4-5-4-5-2s3 2 5 2zm0 0c1-4 5-4 5-2s-3 2-5 2z"/>',
+edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
 image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
 x:'<path d="M6 6l12 12M18 6L6 18"/>',
 check:'<path d="M5 12l5 5 9-10"/>'};
