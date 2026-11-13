@@ -102,6 +102,23 @@ label input[type=file]{display:block;position:absolute;inset:0;width:100%;height
 label.fl{display:flex;justify-content:space-between;gap:8px}label.fl span+span{font-size:11px}
 .kv{margin-top:10px}.kv small{display:block;color:var(--sub);font-size:11px}.kv div{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
 input[type=number]::placeholder{color:var(--sub);opacity:.75}
+.sh{position:relative}
+.hd button+button{margin-left:8px}.hd .dots{color:var(--sub)}
+.hacts{display:flex;gap:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ft{background:var(--card);border-radius:16px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:6px;box-shadow:0 2px 10px var(--sh);color:var(--ac);min-width:0}.ft b{color:var(--tx);font-size:14px;overflow-wrap:anywhere}.ft small{color:var(--sub);font-size:11px}.ft.ftx{background:var(--pk2)}
+.gc{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.ck{position:absolute;top:12px;left:12px;z-index:2;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);display:grid;place-items:center;color:#fff}.ck.on{background:var(--pk);border-color:var(--pk);color:var(--on)}.ck .ic{margin:0}
+.gc.sl .ph{outline:3px solid var(--pk);outline-offset:-3px}
+.selt{position:fixed;top:0;left:0;right:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;background:var(--card);box-shadow:0 2px 10px var(--sh)}.selt button{padding:8px 12px;border-radius:99px;background:var(--pk2);color:var(--tx);font-size:13px;display:inline-grid;place-items:center}
+.selb{position:fixed;left:0;right:0;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:8;padding:0 16px;max-width:480px;margin:0 auto}.selb .pri{margin-top:0;box-shadow:0 4px 14px var(--sh)}
+.fdl{max-height:40vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.fr{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:var(--card);text-align:left;font-size:15px;color:var(--tx)}
+.cb{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--pk);display:grid;place-items:center;color:var(--on);font-weight:700}.cb.on{background:var(--pk)}.cb.mid{background:var(--pk2);color:var(--ac)}.cb .ic{margin:0}
+.mn{position:absolute;right:16px;top:56px;z-index:5;background:var(--card);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.3);overflow:hidden;min-width:210px}.mn button{display:block;width:100%;padding:13px 16px;text-align:left;font-size:15px;background:none;color:var(--tx)}.mn .rd{color:#e5484d;font-weight:700}
+#dlg{display:none;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:24px}#dlg.on{display:flex}
+.dbox{background:var(--card);color:var(--tx);border-radius:18px;padding:20px;width:100%;max-width:340px}.dbox p{margin:0 0 16px;line-height:1.6;font-size:15px}.dbox small{color:var(--sub)}
+.dbt{display:flex;gap:8px}.dbt button{flex:1;padding:12px;border-radius:12px;background:var(--pk2);color:var(--tx);font-size:15px}.dbt .dok{background:var(--pk);color:var(--on);font-weight:700}.dbt .dng{background:#e5484d;color:#fff}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -135,18 +152,93 @@ async function proc(file){
 function sim(a,b){let dot=0,hi=0;for(let i=0;i<256;i++)dot+=a.g[i]*b.g[i];for(let i=0;i<64;i++)hi+=Math.min(a.h[i],b.h[i]);return .4*Math.max(0,dot/256)+.6*hi}
 
 /* ---- 画面 ---- */
-const own=()=>items.filter(i=>!i.wish),wish=()=>items.filter(i=>i.wish);
-function card(i){return `<button class="gc" onclick="detail('${i.id}')"><div class="ph">${i.img?`<img src="${i.img}" alt="">`:ic('gift',34)}</div><b>${esc(i.name)}</b><small>${esc(i.work)||'作品名なし'}</small>${i.chara?`<span class="tag">${esc(i.chara)}</span>`:''}${i.wish?'<span class="tag">購入予定</span>':`<i class="q">×${i.qty}</i>`}</button>`}
-function list(a,msg){return a.length?`<div class="grid">${a.map(card).join('')}</div>`:`<div class="empty">${msg}</div>`}
+/* ---- フォルダ・ゴミ箱 ---- */
+let folders=[],cf=null,selMode=false,sel=new Set(),lpT=0,lpF=0,lpX=0,lpY=0,fdIds=[],fdTitle='',fdNote='',dlgOk=null;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const SYS=[['f-work','作品別'],['f-chara','キャラクター別'],['f-genre','グッズの種類別'],['f-period','発売時期別']];
+function loadF(){let a=[];try{a=JSON.parse(localStorage.getItem('oshi-folders')||'[]')}catch(e){}
+  folders=[...SYS.filter(([id])=>!a.some(f=>f.id===id)).map(([id,n],k)=>({id,name:n,parent:null,at:k})),...a]}
+function saveF(){try{localStorage.setItem('oshi-folders',JSON.stringify(folders))}catch(e){}}
+const live=()=>items.filter(i=>!i.del);
+const own=()=>live().filter(i=>!i.wish),wish=()=>live().filter(i=>i.wish);
+const kids=p=>folders.filter(f=>f.parent===p),fById=id=>folders.find(f=>f.id===id),inF=(i,id)=>(i.folders||[]).includes(id);
+function desc(id){const r=[id];kids(id).forEach(k=>r.push(...desc(k.id)));return r}
+function fCount(id){const d=new Set(desc(id));return live().filter(i=>(i.folders||[]).some(x=>d.has(x))).length}
+function flat(p=null,d=0){return kids(p).flatMap(f=>[{f,d},...flat(f.id,d+1)])}
+function crumb(id){const r=[];let f=fById(id);while(f){r.unshift(f.name);f=fById(f.parent)}return r.join(' › ')}
+function ensureF(name,parent){let f=folders.find(x=>x.parent===parent&&x.name===name);if(!f){f={id:uid(),name,parent,at:Date.now()};folders.push(f)}return f.id}
+function autoSort(list){const b=folders.length;let n=0;
+  list.forEach(i=>{const add=[];
+    if(i.work)add.push(ensureF(i.work,'f-work'));
+    (i.chara||'').split(/[、,，\/／・\n]+/).map(x=>x.trim()).filter(Boolean).forEach(c=>add.push(ensureF(c,'f-chara')));
+    if(i.genre)add.push(ensureF(i.genre,'f-genre'));
+    const y=(i.period||'').normalize('NFKC').match(/(\d{4})\s*年?/);if(y)add.push(ensureF(y[1]+'年','f-period'));
+    if(add.length){i.folders=[...new Set([...(i.folders||[]),...add])];put(i);n++}});
+  saveF();return{n,nf:folders.length-b}}
+const itemsGrid=(a,m)=>a.length?`<div class="grid">${a.map(i=>card(i,1)).join('')}</div>`:`<div class="empty">${m}</div>`;
+const curItems=()=>cf==='all'?live():cf==='unsorted'?live().filter(i=>!(i.folders||[]).length):cf?live().filter(i=>inF(i,cf)):[];
+function openF(id){cf=id;selMode=false;sel.clear();render();scrollTo(0,0)}
+function backF(){const f=fById(cf);cf=(cf==='all'||cf==='unsorted'||!f)?null:f.parent;selMode=false;sel.clear();render();scrollTo(0,0)}
+function cardTap(id){if(lpF){lpF=0;return}if(selMode){sel.has(id)?sel.delete(id):sel.add(id);if(!sel.size)selMode=false;render()}else detail(id)}
+function selOff(){selMode=false;sel.clear();render()}
+function selAll(){curItems().forEach(i=>sel.add(i.id));render()}
+function selFold(){if(sel.size)folderDlg([...sel],'フォルダに追加・移動')}
+document.addEventListener('pointerdown',e=>{clearTimeout(lpT);const c=e.target.closest&&e.target.closest('.gc[data-id]');if(!c||view!=='col')return;lpF=0;lpX=e.clientX;lpY=e.clientY;lpT=setTimeout(()=>{lpF=1;selMode=true;sel.add(c.dataset.id);render();try{navigator.vibrate&&navigator.vibrate(15)}catch(x){}},500)});
+document.addEventListener('pointermove',e=>{if(lpT&&(Math.abs(e.clientX-lpX)>10||Math.abs(e.clientY-lpY)>10))clearTimeout(lpT)});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>clearTimeout(lpT)));
+document.addEventListener('scroll',()=>clearTimeout(lpT),true);
+/* フォルダ選択ダイアログ(チェックで追加・外す) */
+function folderDlg(ids,title,note){fdIds=ids;fdTitle=title||'フォルダに追加・移動';fdNote=note||'';fdOpen()}
+const fdItems=()=>fdIds.map(id=>items.find(x=>x.id===id)).filter(Boolean);
+function fdHTML(){const its=fdItems();return flat().map(({f,d})=>{const n=its.filter(i=>inF(i,f.id)).length,st=n&&n===its.length?'on':n?'mid':'';return `<button class="fr" style="padding-left:${12+d*18}px" onclick="fdTog('${f.id}')"><span class="cb ${st}">${st==='on'?ic('check',14):st==='mid'?'−':''}</span><span>${esc(f.name)}</span></button>`}).join('')}
+function fdOpen(){sheet(`<h2 style="margin-top:0">${esc(fdTitle)}</h2><p class="sub">${fdNote}チェックを付けるとフォルダに入り、外すとフォルダから出ます。グッズ自体は消えません。(${fdItems().length}件)</p><div id="fdl" class="fdl">${fdHTML()}</div><p class="sub" id="fdn" style="margin-top:8px"></p><button class="pri ghost" onclick="fnSheet('fd')">${ic('folderplus',18)} 新しいフォルダを作って追加</button><button class="pri ghost" onclick="fdAuto()">${ic('wand',18)} 入力した情報から自動でまとめる</button><button class="pri" onclick="fdDone()">完了</button>`)}
+function fdTog(fid){const its=fdItems(),all=its.length&&its.every(i=>inF(i,fid));its.forEach(i=>{const a=i.folders||[];i.folders=all?a.filter(x=>x!==fid):[...new Set([...a,fid])];put(i)});const L=$('#fdl');if(L){const y=L.scrollTop;L.innerHTML=fdHTML();L.scrollTop=y}}
+function fdDone(){closeS();selMode=false;sel.clear();render()}
+function fdAuto(){const r=autoSort(fdItems());const L=$('#fdl');if(L)L.innerHTML=fdHTML();const n=$('#fdn');if(n)n.textContent=r.n?'入力した情報から、フォルダに追加しました(新しいフォルダ'+r.nf+'個)。':'振り分けられる情報(作品名・キャラクター名・グッズの種類・発売時期)が入力されていません。'}
+function newFolder(){fnSheet('col')}
+function fnSheet(m){const def=m==='col'&&cf&&cf!=='all'&&cf!=='unsorted'?cf:'';
+  sheet(`<h2 style="margin-top:0">新しいフォルダ</h2><label class="f fl" for="fn"><span>フォルダ名</span><span id="c-fn">0/50</span></label><textarea id="fn" class="ta" rows="1" maxlength="50" placeholder="例:星のしずく、イベント限定、2025年購入" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><label class="f" for="np">入れる場所</label><select id="np" class="ta" style="padding:11px 12px"><option value="">最上位(コレクション直下)</option>${flat().map(({f,d})=>`<option value="${f.id}"${f.id===def?' selected':''}>${'　'.repeat(d)}${esc(f.name)}</option>`).join('')}</select><button class="pri" onclick="fnMake('${m}')">${m==='fd'?'作成して追加':'作成'}</button><button class="pri ghost" onclick="${m==='fd'?'fdOpen()':'closeS()'}">キャンセル</button>`)}
+function fnMake(m){const n=$('#fn').value.trim();if(!n){$('#fn').focus();return}const id=uid();folders.push({id,name:n,parent:$('#np').value||null,at:Date.now()});saveF();
+  if(m==='fd'){fdItems().forEach(i=>{i.folders=[...new Set([...(i.folders||[]),id])];put(i)});fdOpen()}else{closeS();render()}}
+function autoMenu(){confirmDlg('登録したグッズの情報(作品名・キャラクター名・グッズの種類・発売時期)から、フォルダを自動で作って振り分けます。<br><small>今あるフォルダ分けは、そのまま残ります。</small>',()=>{const r=autoSort(live());render();sheet(`<h2 style="margin-top:0">自動でまとめました</h2><p>${r.n}件のグッズを振り分けました。<br>新しく作ったフォルダ:${r.nf}個</p><button class="pri" onclick="closeS()">OK</button>`)},'実行')}
+/* 確認ダイアログ・削除(ゴミ箱) */
+function confirmDlg(msg,ok,label,danger){dlgOk=ok;let d=$('#dlg');if(!d){d=document.createElement('div');d.id='dlg';document.body.appendChild(d)}
+  d.innerHTML=`<div class="dbox" role="alertdialog"><p>${msg}</p><div class="dbt"><button onclick="dlgClose()">キャンセル</button><button class="dok${danger?' dng':''}" onclick="dlgGo()">${label||'完了'}</button></div></div>`;d.className='on'}
+function dlgClose(){const d=$('#dlg');if(d)d.className=''}
+function dlgGo(){const f=dlgOk;dlgClose();if(f)f()}
+function askDel(id){confirmDlg('このグッズ情報を削除しますか？<br><small>削除すると、マイページの「ゴミ箱」に移ります。</small>',()=>{const i=items.find(x=>x.id===id);if(!i)return;i.del=Date.now();put(i);closeS();selMode=false;sel.clear();render()},'完了',1)}
+function askPerm(id){confirmDlg('ゴミ箱から完全に削除しますか？<br><small>この操作は元に戻せません。</small>',()=>{items=items.filter(x=>x.id!==id);del(id);closeS();render()},'完了',1)}
+function dotMenu(id){const old=$('#mn');if(old){old.remove();return}const i=items.find(x=>x.id===id);if(!i)return;
+  const b=i.del?[['perm','完全に削除する',1]]:[['edit','編集する'],['fold','フォルダに追加・移動'],['del','削除',1]];
+  const m=document.createElement('div');m.id='mn';m.className='mn';m.innerHTML=b.map(([k,l,r])=>`<button class="${r?'rd':''}" onclick="mnGo('${k}','${id}')">${l}</button>`).join('');
+  const h=document.querySelector('.sh');if(h)h.appendChild(m);setTimeout(()=>document.addEventListener('click',()=>{const x=$('#mn');if(x)x.remove()},{once:true}),0)}
+function mnGo(k,id){const m=$('#mn');if(m)m.remove();if(k==='edit')editItem(id);else if(k==='fold')folderDlg([id],'フォルダに追加・移動');else if(k==='del')askDel(id);else askPerm(id)}
+const foldRows=i=>{const a=(i.folders||[]).map(crumb).filter(Boolean);return a.length?`<div class="kv"><small>入っているフォルダ</small><div>${a.map(esc).join('<br>')}</div></div>`:''};
+
+function card(i,c){const s=c&&sel.has(i.id);return `<button class="gc${s?' sl':''}"${c?` data-id="${i.id}" onclick="cardTap('${i.id}')" oncontextmenu="return false"`:` onclick="detail('${i.id}')"`}>${c&&selMode?`<span class="ck${s?' on':''}">${s?ic('check',14):''}</span>`:''}<div class="ph">${i.img?`<img src="${i.img}" alt="">`:ic('gift',34)}</div><b>${esc(i.name)}</b><small>${esc(i.work)||'作品名なし'}</small>${i.chara?`<span class="tag">${esc(i.chara)}</span>`:''}${i.wish?'<span class="tag">購入予定</span>':`<i class="q">×${i.qty}</i>`}</button>`}
+function list(a,msg){return a.length?`<div class="grid">${a.map(i=>card(i)).join('')}</div>`:`<div class="empty">${msg}</div>`}
 const V={
 home(){const o=own(),n=o.reduce((a,i)=>a+i.qty,0),rec=[...o].sort((a,b)=>b.at-a.at).slice(0,8);
 return `<h1>推しグッズ管理 ♥</h1><p class="sub">好きなものを、もっと楽しく、もっと便利に。</p>
 <div class="st"><div><small>登録グッズ数</small><b>${o.length}</b><u>件</u></div><div><small>総所持数</small><b>${n}</b><u>個</u></div><div><small>購入予定</small><b>${wish().length}</b><u>件</u></div></div>
 <button class="cam" onclick="check()"><i>${ic('camera',30)}</i><span><b>カメラで所持確認</b>グッズを撮影して、登録済みのコレクションから同じものを探します。</span></button>
 <h2>クイックメニュー</h2><div class="qm"><button onclick="pickSheet('add')"><em>${ic('plus')}</em>グッズを登録</button><button onclick="go('col')"><em>${ic('folder')}</em>コレクション</button><button onclick="go('wish')"><em>${ic('bag')}</em>購入予定</button><button onclick="go('find')"><em>${ic('search')}</em>検索</button></div>
-<h2>最近登録したグッズ</h2>${rec.length?`<div class="row">${rec.map(card).join('')}</div>`:'<div class="empty">まだグッズがありません。<br>「グッズを登録」から1つ追加してみましょう。</div>'}`},
-col(){const o=own(),ws=[...new Set(o.map(i=>i.work).filter(Boolean))];
-return `<h1>コレクション</h1><div class="chips"><button class="${flt?'':'on'}" onclick="setF('')">すべて</button>${ws.map(w=>`<button class="${flt===w?'on':''}" onclick="setF(this.dataset.w)" data-w="${esc(w)}">${esc(w)}</button>`).join('')}</div>${list(o.filter(i=>!flt||i.work===flt),'まだ登録がありません。')}`},
+<h2>最近登録したグッズ</h2>${rec.length?`<div class="row">${rec.map(i=>card(i)).join('')}</div>`:'<div class="empty">まだグッズがありません。<br>「グッズを登録」から1つ追加してみましょう。</div>'}`},
+col(){const sp=cf==='all'||cf==='unsorted';const f=!sp&&cf?fById(cf):null;if(cf&&!sp&&!f)cf=null;
+  const L=live(),un=L.filter(i=>!(i.folders||[]).length);
+  const back=cf===null?'':`<button class="bk" onclick="backF()">‹ ${sp||!f||!f.parent?'コレクション':esc((fById(f.parent)||{}).name||'')}</button>`;
+  const title=sp?(cf==='all'?'全ての画像':'未選別の画像'):f?esc(f.name):'コレクション';
+  const hd=`<div class="hdr"><h1>${title}</h1><div class="hacts"><button class="bell" onclick="newFolder()" aria-label="フォルダを作成">${ic('folderplus',20)}</button><button class="bell" onclick="autoMenu()" aria-label="自動でフォルダにまとめる">${ic('wand',20)}</button></div></div>`;
+  const sub=k=>fCount(k.id)+'件'+(kids(k.id).length?' ・ フォルダ'+kids(k.id).length:'');
+  const tile=(id,n,t,c)=>`<button class="ft${c?' ftx':''}" onclick="openF('${id}')">${ic('folder',26)}<b>${esc(n)}</b><small>${t}</small></button>`;
+  let body='';
+  if(cf===null)body=`<p class="sub">グッズを長押しすると、まとめて選んでフォルダに入れられます。</p><div class="fg" style="margin-top:12px">${tile('all','全ての画像(グッズ情報画像)',L.length+'件',1)}${tile('unsorted','未選別の画像(グッズ情報画像)',un.length+'件',1)}${kids(null).map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`;
+  else if(sp)body=itemsGrid(cf==='all'?L:un,cf==='all'?'まだ登録がありません。':'未選別のグッズはありません。');
+  else{const ks=kids(cf);body=(ks.length?`<h2>フォルダ</h2><div class="fg">${ks.map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`:'')+'<h2>グッズ</h2>'+itemsGrid(L.filter(i=>inF(i,cf)),'このフォルダには、まだグッズがありません。グッズを長押しして選び、「フォルダに追加・移動」から入れられます。')}
+  const bars=selMode?`<div class="selt"><button onclick="selOff()" aria-label="選択をやめる">${ic('x',18)}</button><b>${sel.size}件を選択中</b><button class="selall" onclick="selAll()">すべて選択</button></div><div class="selb"><button class="pri" onclick="selFold()">${ic('folder',18)} フォルダに追加・移動</button></div>`:'';
+  return `${back}${hd}${body}${bars}`},
+trash(){const a=items.filter(i=>i.del).sort((x,y)=>y.del-x.del);
+  return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>ゴミ箱</h1><p class="sub">削除したグッズ情報は、ここにだけ残ります。ここから削除すると完全に消えて、元に戻せません。</p><div style="height:12px"></div>${a.length?a.map(i=>`<button class="hit" onclick="detail('${i.id}')">${i.img?`<img src="${i.img}" alt="">`:`<div class="ph">${ic('gift',22)}</div>`}<div><b>${esc(i.work)||'作品名なし'}</b></div></button>`).join(''):'<div class="empty">ゴミ箱は空です。</div>'}`},
 wish(){return `<div class="hdr"><h1>購入予定リスト</h1><button class="bell" onclick="pickSheet('wish')" aria-label="購入予定を追加">${ic('plus',20)}</button></div><p class="sub">欲しいグッズをチェック。買ったらタップして所持に移せます。</p><div style="height:12px"></div>${list(wish(),'購入予定はありません。<br>右上の＋から、写真を撮るか画像を選んで追加できます。')}`},
 theme(){return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>テーマ</h1><p class="sub">アプリ全体の色合いを選べます。選んだら「適用」を押してください。</p><div class="swg">${T.map((t,i)=>`<button class="sw ${pend===i?'on':''}" onclick="pickT(${i})" aria-pressed="${pend===i}"><i style="background:${t.sw||pal(t,isDark()).pk};color:${t.sw==='#fff'?'#333':pal(t,isDark()).on}">${pend===i?ic('check',20):''}</i><span>${t.n}${cur===i?'<br>(使用中)':''}</span></button>`).join('')}</div><button class="pri" onclick="applyBtn()" ${pend===cur?'disabled':''}>適用</button>`},
 notice(){return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>お知らせ</h1><div class="empty">お知らせはありません。<br>アプリの更新情報などが届くと、ここに表示されます。</div>`},
@@ -154,19 +246,19 @@ acc(){return `<button class="bk" onclick="openSet()">‹ 設定</button><h1>ア�
 set(){const o=[['auto','端末に合わせる','スマホの設定に合わせて切り替わります。'],['light','ライトモード','明るい配色で表示します。'],['dark','ダークモード','暗い配色で表示します。']];
 return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>設定</h1><button class="rb" onclick="go('acc')"><span>${ic('user',20)} アカウント</span><small>›</small></button><h2>表示モード</h2>${o.map(([k,n,d])=>`<button class="rb" onclick="pickM('${k}')" aria-pressed="${pm===k}"><span>${n}${mode===k?'(使用中)':''}<br><small>${d}</small></span><b style="color:var(--ac)">${pm===k?ic('check',20):''}</b></button>`).join('')}<p class="sub" style="margin:10px 0 0">ライトはパステル、ダークはダスティな色合いになります。白と黒のテーマは変わりません。</p><button class="pri" onclick="applyMode()" ${pm===mode?'disabled':''}>適用</button>`},
 find(){return `<h1>検索</h1><textarea id="q" class="ta" rows="1" placeholder="商品名・キャラ名・作品名など" oninput="ag(this);doFind(this.value)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><div id="sr" style="margin-top:12px"></div>`},
-me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
+me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
 };
-function doFind(v){v=v.trim().toLowerCase();const r=v?items.filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
+function doFind(v){v=v.trim().toLowerCase();const r=v?live().filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
 function setF(w){flt=w;render()}
-function go(v){view=v;flt='';render();scrollTo(0,0)}
+function go(v){view=v;flt='';if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
 function render(){
   $('#m').innerHTML=V[view]();
   const t=[['home','home','ホーム'],['col','folder','コレクション'],['cam','camera',''],['wish','bag','購入予定'],['me','user','マイページ']];
-  $('#nav').innerHTML=t.map(([k,e,l])=>k==='cam'?`<button class="fab" onclick="check()" aria-label="カメラで所持確認"><em>${ic(e,k==='cam'?26:22)}</em></button>`:`<button class="${view===k||(k==='me'&&(view==='theme'||view==='set'||view==='acc'||view==='notice'))?'on':''}" onclick="go('${k}')"><em>${ic(e,k==='cam'?26:22)}</em>${l}</button>`).join('');
+  $('#nav').innerHTML=t.map(([k,e,l])=>k==='cam'?`<button class="fab" onclick="check()" aria-label="カメラで所持確認"><em>${ic(e,k==='cam'?26:22)}</em></button>`:`<button class="${view===k||(k==='me'&&(view==='theme'||view==='set'||view==='acc'||view==='notice'||view==='trash'))?'on':''}" onclick="go('${k}')"><em>${ic(e,k==='cam'?26:22)}</em>${l}</button>`).join('');
 }
 
 /* ---- シート ---- */
-function sheet(h){const S=$('#S');S.innerHTML=`<div class="sh"><div class="hd"><button onclick="closeS()" aria-label="閉じる">${ic('x',16)}</button></div>${h}</div>`;S.className='on'}
+function sheet(h,hx){const S=$('#S');S.innerHTML=`<div class="sh"><div class="hd">${hx||''}<button onclick="closeS()" aria-label="閉じる">${ic('x',16)}</button></div>${h}</div>`;S.className='on'}
 function closeS(){$('#S').className='';armed=false}
 /* ---- 画像選択 → 確認画面 ---- */
 let rmode='check',kw='';
@@ -177,19 +269,19 @@ async function picked(f,meta){if(!f)return;try{tmp=await proc(f)}catch(e){sheet(
 const norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[!?！？「」『』()（）\[\]【】\-_~〜]+/g,'');
 function grams(s,uni){const g=new Set();String(s||'').split(/[\s\u3000、。,.・\/|]+/).forEach(w=>{const t=norm(w);if(t.length===1)g.add(t);for(let i=0;i<t.length-1;i++)g.add(t.slice(i,i+2));if(uni)for(const c of t)g.add(c)});return g}
 function kwScore(q,i){const Q=grams(q);if(!Q.size)return 0;const D=grams([i.name,i.work,i.chara,i.memo,i.genre,i.shop,i.period,i.price,i.size].join('|'),1);let m=0;Q.forEach(x=>{if(D.has(x))m++});return m/Q.size}
-function cands(){const q=kw.trim();return items.map(i=>{const si=i.feat?sim(tmp.feat,i.feat):0,sk=q?kwScore(q,i):0;const gw=tmp.genre&&i.genre?(i.genre===tmp.genre?1.15:.7):1;return{i,sk,s:Math.min(1,(q?(i.feat?.35*si+.65*sk:sk):si)*gw)}}).filter(x=>q?x.sk>0:x.i.feat).sort((a,b)=>b.s-a.s).slice(0,5)}
+function cands(){const q=kw.trim();return live().map(i=>{const si=i.feat?sim(tmp.feat,i.feat):0,sk=q?kwScore(q,i):0;const gw=tmp.genre&&i.genre?(i.genre===tmp.genre?1.15:.7):1;return{i,sk,s:Math.min(1,(q?(i.feat?.35*si+.65*sk:sk):si)*gw)}}).filter(x=>q?x.sk>0:x.i.feat).sort((a,b)=>b.s-a.s).slice(0,5)}
 function candHTML(r){return r.length?r.map(x=>`<button class="hit" onclick="detail('${x.i.id}',1)">${x.i.img?`<img src="${x.i.img}" alt="">`:`<div class="ph">${ic('gift',22)}</div>`}<div><b>${esc(x.i.name)}</b><small class="sub">${esc(x.i.work)||'作品名なし'} ・ ${x.i.wish?'購入予定':'所持 ×'+x.i.qty}</small></div><span>${Math.round(x.s*100)}%</span></button>`).join(''):`<div class="empty" style="margin-top:8px">${items.length?'候補が見つかりません。キーワードを変えてみてください。':'登録済みのグッズがまだありません。'}</div>`}
 function kwIn(v){kw=v;$('#cl').innerHTML=candHTML(cands())}
 function review(){const T2={check:'同じものがあるか確認',add:'登録済みに同じものがないか確認',wish:'すでに持っていないか確認'}[rmode];
   const go2={check:['見つからない → この写真で新規登録','add(true)'],add:['同じものはない → この画像で登録に進む','add(true)'],wish:['持っていない → 購入予定の登録に進む','add(true,true)']}[rmode];
   sheet(`<h2 style="margin-top:0">${T2}</h2><img class="pv" src="${tmp.img}" alt="選んだ画像">${tmp.genre?`<p class="sub" style="margin-top:8px">種類:${esc(tmp.genre)}(同じ種類のグッズを優先して探します)</p>`:''}${tmp.text?'<p class="sub" style="margin-top:8px">詳細モード:シールや説明文を見ながら、下のキーワード欄に入力して探せます。文字の自動読み取りは今後追加予定です。</p>':''}<h2>似ている候補</h2><p class="sub">タップすると詳細が開きます。同じものがあるか確認してください。</p><div id="cl">${candHTML(cands())}</div><h2>キーワードでさらに探す</h2><p class="sub">グッズ名・作品名・キャラ名・説明など、分かることを入れてください。詳しく入れるほど、合うものが上に出ます。</p><textarea id="kw" class="ta" rows="1" placeholder="例:星のしずく ユキ ぬいぐるみ" oninput="ag(this);kwIn(this.value)" onkeydown="if(event.key==='Enter')event.preventDefault()">${esc(kw)}</textarea><button class="pri ghost" onclick="${go2[1]}">${go2[0]}</button>`);document.querySelectorAll('.ta').forEach(ag)}
-const FLD=[['n','タイトル',50,'自分が一目で分かる名前(例:缶バッジ(A))'],['w','作品名',100,'作品のタイトル(例:星のしずく)'],['c','キャラクター名',200,'複数キャラクターの名前も入力できます(例:ユキ、ハル)'],['g','グッズの種類',100,'正式名称や分かりやすい呼び方(例:缶バッジ 44mm)'],['sh','入手先・販売元',150,'イベント、店舗、販売元など'],['pd','発売時期・販売期間',300,'発売日、受注期間、発送予定など'],['pr','定価',50,'商品の定価(例:1,100円)'],['sz','サイズ',100,'縦×横など、具体的な寸法(例:44mm)'],['m','自由記入欄',1000,'補足情報や自分用のメモ(検索にも使われます)']];
+const FLD=[['n','タイトル',50,'自分が一目で分かる名前(例:缶バッジ(A))'],['w','作品名',100,'作品のタイトル(例:星のしずく)'],['c','キャラクター名',200,'複数キャラクターの名前も入力できます(例:ユキ、ハル)'],['g','グッズの種類',100,'正式名称や分かりやすい呼び方(例:缶バッジ 44mm)'],['sh','入手先・販売元',150,'イベント、店舗、販売元など'],['pd','発売時期・販売期間',300,'発売日、受注期間、発送予定など'],['pr','定価',50,'商品の定価(例:1,100円)'],['sz','サイズ',100,'縦×横など、具体的な寸法(例:44mm)'],['mm','自由記入欄',1000,'補足情報や自分用のメモ(検索にも使われます)']];
 const DL=[['work','作品名'],['chara','キャラクター名'],['genre','グッズの種類'],['shop','入手先・販売元'],['period','発売時期・販売期間'],['price','定価'],['size','サイズ'],['memo','自由記入欄']];
 const detRows=i=>DL.filter(([k])=>i[k]).map(([k,l])=>`<div class="kv"><small>${l}</small><div>${esc(i[k])}</div></div>`).join('');
 function ag(e){e.style.height='auto';e.style.height=e.scrollHeight+'px';const c=$('#c-'+e.id);if(c)c.textContent=e.value.length+'/'+e.maxLength}
-const fldHTML=([id,l,mx,ph],v)=>`<label class="f fl" for="${id}"><span>${l}</span><span id="c-${id}">0/${mx}</span></label><textarea id="${id}" class="ta" rows="1" maxlength="${mx}" placeholder="${esc(ph)}" oninput="ag(this)"${id==='m'?'':` onkeydown="if(event.key==='Enter')event.preventDefault()"`}>${esc(v||'')}</textarea>`;
+const fldHTML=([id,l,mx,ph],v)=>`<label class="f fl" for="${id}"><span>${l}</span><span id="c-${id}">0/${mx}</span></label><textarea id="${id}" class="ta" rows="1" maxlength="${mx}" placeholder="${esc(ph)}" oninput="ag(this)"${id==='mm'?'':` onkeydown="if(event.key==='Enter')event.preventDefault()"`}>${esc(v||'')}</textarea>`;
 function add(useTmp,wd){if(!useTmp){tmp=null;kw=''}
-  const ge=tmp&&tmp.genre?GEN.find(g=>g[0]===tmp.genre):null,pre={g:tmp&&tmp.genre||'',sz:ge&&!ge[5]&&!ge[6]?gsz(ge):'',m:kw};
+  const ge=tmp&&tmp.genre?GEN.find(g=>g[0]===tmp.genre):null,pre={g:tmp&&tmp.genre||'',sz:ge&&!ge[5]&&!ge[6]?gsz(ge):'',mm:kw};
   sheet(`<h2 style="margin-top:0">グッズを登録</h2>${tmp?`<img class="pv" src="${tmp.img}" alt="">`:''}<div style="display:flex;gap:8px"><label class="btn ghost" style="margin-top:0">${ic('camera',18)} ${tmp?'撮り直す':'撮影'}<input type="file" accept="image/*" capture="environment" hidden onchange="pick(this.files[0])"></label><label class="btn ghost" style="margin-top:0">${ic('image',18)} 選ぶ<input type="file" accept="image/*" hidden onchange="pick(this.files[0])"></label></div>
   <p class="sub" style="margin-top:10px">すべて空でも保存できます。分かるところだけ入力してください。</p>
   ${FLD.map(f=>fldHTML(f,pre[f[0]])).join('')}
@@ -200,7 +292,7 @@ function add(useTmp,wd){if(!useTmp){tmp=null;kw=''}
 const qHTML=v=>`<input type="number" id="q" value="${v}" min="1" inputmode="numeric" data-prev="${v}" placeholder="前回の個数: ${v}" onfocus="qp(this)">`;
 function qp(e){if(e.value)e.dataset.prev=e.value;e.placeholder='前回の個数: '+(e.dataset.prev||'1')}
 function editItem(id){const i=items.find(x=>x.id===id);if(!i)return;
-  const val={n:i.name==='(名前なし)'?'':i.name,w:i.work,c:i.chara,g:i.genre,sh:i.shop,pd:i.period,pr:i.price,sz:i.size,m:i.memo};
+  const val={n:i.name==='(名前なし)'?'':i.name,w:i.work,c:i.chara,g:i.genre,sh:i.shop,pd:i.period,pr:i.price,sz:i.size,mm:i.memo};
   sheet(`<h2 style="margin-top:0">グッズを編集</h2>${i.img?`<img class="pv" src="${i.img}" alt="">`:''}
   <p class="sub" style="margin-top:10px">すべて空でも保存できます。</p>
   ${FLD.map(f=>fldHTML(f,val[f[0]])).join('')}
@@ -209,22 +301,20 @@ function editItem(id){const i=items.find(x=>x.id===id);if(!i)return;
   <button class="pri" onclick="saveEdit('${i.id}')">保存する</button><button class="pri ghost" onclick="detail('${i.id}')">キャンセル</button>`);
   document.querySelectorAll('.ta').forEach(ag)}
 function saveEdit(id){const i=items.find(x=>x.id===id);if(!i)return;const v=k=>$('#'+k).value.trim(),g=v('g');
-  Object.assign(i,{name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('m'),qty:Math.max(1,parseInt($('#q').value)||i.qty||1),wish:$('#wi').checked});
+  Object.assign(i,{name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('mm'),qty:Math.max(1,parseInt($('#q').value)||i.qty||1),wish:$('#wi').checked});
   put(i);render();detail(id)}
-const FK=['n','w','c','g','sh','pd','pr','sz','m','q','wi'];
+const FK=['n','w','c','g','sh','pd','pr','sz','mm','q','wi'];
 async function pick(f){if(!f)return;const keep=FK.map(k=>{const e=$('#'+k);return e?(k==='wi'?e.checked:e.value):''});
   try{tmp=await proc(f)}catch(e){return}
   add(true);FK.forEach((k,j)=>{const e=$('#'+k);if(!e)return;if(k==='wi')e.checked=keep[j];else{e.value=keep[j];if(e.classList.contains('ta'))ag(e);if(k==='q')qp(e)}})}
 function saveItem(){const v=k=>$('#'+k).value.trim(),g=v('g');
-  const i={id:Date.now().toString(36),name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('m'),qty:Math.max(1,parseInt($('#q').value)||1),wish:$('#wi').checked,img:tmp?tmp.img:'',feat:tmp?tmp.feat:null,at:Date.now()};
-  items.unshift(i);put(i);tmp=null;kw='';closeS();render()}
-function detail(id,fr){const i=items.find(x=>x.id===id);if(!i)return;armed=false;
-  sheet(`${fr?'<button class="bk" onclick="review()">‹ 確認画面に戻る</button>':''}${i.img?`<img class="pv" src="${i.img}" alt="">`:'<div class="pv ph">'+ic('gift',64)+'</div>'}<h2>${esc(i.name)}</h2>${detRows(i)}
-  ${i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qty('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qty('${i.id}',1)" aria-label="増やす">＋</button></div>`}
-  <button class="pri ghost" onclick="editItem('${i.id}')">${ic('edit',18)} 編集する</button><button class="pri danger" id="dl" onclick="rm('${i.id}')">削除する</button>`)}
+  const i={id:Date.now().toString(36),name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('mm'),qty:Math.max(1,parseInt($('#q').value)||1),wish:$('#wi').checked,img:tmp?tmp.img:'',feat:tmp?tmp.feat:null,at:Date.now()};
+  items.unshift(i);put(i);tmp=null;kw='';render();folderDlg([i.id],'どのフォルダに入れますか？','入れなくても大丈夫です(「未選別」に入ります)。あとからでも変えられます。')}
+function detail(id,fr){const i=items.find(x=>x.id===id);if(!i)return;
+  sheet(`${fr?'<button class="bk" onclick="review()">‹ 確認画面に戻る</button>':''}${i.del?'<p class="sub" style="margin-bottom:8px">ゴミ箱の中のグッズです。</p>':''}${i.img?`<img class="pv" src="${i.img}" alt="">`:'<div class="pv ph">'+ic('gift',64)+'</div>'}<h2>${esc(i.name)}</h2>${detRows(i)}${foldRows(i)}
+  ${i.del?`<div class="kv"><small>個数</small><div>×${i.qty}</div></div>`:i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qty('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qty('${i.id}',1)" aria-label="増やす">＋</button></div>`}`,`<button class="dots" onclick="dotMenu('${i.id}')" aria-label="メニュー">${ic('more',18)}</button>`)}
 function qty(id,d){const i=items.find(x=>x.id===id);i.qty=Math.max(1,i.qty+d);put(i);$('#qn').textContent='×'+i.qty;render()}
 function own1(id){const i=items.find(x=>x.id===id);i.wish=false;put(i);closeS();render()}
-function rm(id){if(!armed){armed=true;$('#dl').textContent='もう一度押すと削除します';return}items=items.filter(x=>x.id!==id);del(id);closeS();render()}
 $('#S').addEventListener('click',e=>{if(e.target.id==='S')closeS()});
 
 /* ---- アプリ内カメラ ---- */
@@ -375,7 +465,7 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.6(11/11 編集・前回の個数)';
+const APP_VER='v1.7(11/11 フォルダ・ゴミ箱)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -389,6 +479,10 @@ palette:'<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2.2-2.5 1.6-2.5H17a4
 gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
 bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
 gift:'<path d="M3 9h18v3H3z"/><path d="M5 12v8h14v-8M12 9v11"/><path d="M12 9c-1-4-5-4-5-2s3 2 5 2zm0 0c1-4 5-4 5-2s-3 2-5 2z"/>',
+trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+more:'<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',
+folderplus:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v6M9 14h6"/>',
+wand:'<path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
 edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
 image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
 x:'<path d="M6 6l12 12M18 6L6 18"/>',
@@ -427,5 +521,5 @@ function applyMode(){if(pm===mode)return;const d=document.createElement('div');d
 function applyBtn(){if(pend===cur)return;const d=document.createElement('div');d.className='ld';d.setAttribute('role','status');d.innerHTML='<div class="sp"></div><div>テーマを変更しています…</div>';document.body.appendChild(d);
   setTimeout(()=>{cur=pend;applyT(cur);try{localStorage.setItem('oshi-theme2',cur)}catch(e){}render();d.remove()},1000)}
 
-(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);render()})();
+(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();render()})();
 </script></body></html>
