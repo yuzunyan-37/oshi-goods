@@ -153,7 +153,7 @@ function sim(a,b){let dot=0,hi=0;for(let i=0;i<256;i++)dot+=a.g[i]*b.g[i];for(le
 
 /* ---- 画面 ---- */
 /* ---- フォルダ・ゴミ箱 ---- */
-let folders=[],cf=null,selMode=false,sel=new Set(),lpT=0,lpF=0,lpX=0,lpY=0,fdIds=[],fdTitle='',fdNote='',dlgOk=null;
+let folders=[],cf=null,selMode=false,sel=new Set(),lpT=0,lpF=0,lpX=0,lpY=0,fdIds=[],fdTitle='',fdNote='',fdReg=false,dlgOk=null;
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const SYS=[['f-work','作品別'],['f-chara','キャラクター別'],['f-genre','グッズの種類別'],['f-period','発売時期別']];
 function loadF(){let a=[];try{a=JSON.parse(localStorage.getItem('oshi-folders')||'[]')}catch(e){}
@@ -175,6 +175,8 @@ function autoSort(list){const b=folders.length;let n=0;
     const y=(i.period||'').normalize('NFKC').match(/(\d{4})\s*年?/);if(y)add.push(ensureF(y[1]+'年','f-period'));
     if(add.length){i.folders=[...new Set([...(i.folders||[]),...add])];put(i);n++}});
   saveF();return{n,nf:folders.length-b}}
+const isUT=n=>/^タイトル無し\d+$/.test(n)||n==='(名前なし)';
+function nextUntitled(ex){const u=new Set(live().filter(x=>x.id!==ex).map(x=>(String(x.name).match(/^タイトル無し(\d+)$/)||[])[1]).filter(Boolean).map(Number));let n=1;while(u.has(n))n++;return 'タイトル無し'+n}
 const itemsGrid=(a,m)=>a.length?`<div class="grid">${a.map(i=>card(i,1)).join('')}</div>`:`<div class="empty">${m}</div>`;
 const curItems=()=>cf==='all'?live():cf==='unsorted'?live().filter(i=>!(i.folders||[]).length):cf?live().filter(i=>inF(i,cf)):[];
 function openF(id){cf=id;selMode=false;sel.clear();render();scrollTo(0,0)}
@@ -188,18 +190,20 @@ document.addEventListener('pointermove',e=>{if(lpT&&(Math.abs(e.clientX-lpX)>10|
 ['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>clearTimeout(lpT)));
 document.addEventListener('scroll',()=>clearTimeout(lpT),true);
 /* フォルダ選択ダイアログ(チェックで追加・外す) */
-function folderDlg(ids,title,note){fdIds=ids;fdTitle=title||'フォルダに追加・移動';fdNote=note||'';fdOpen()}
+function folderDlg(ids,title,note,reg){fdIds=ids;fdTitle=title||'フォルダに追加・移動';fdNote=note||'';fdReg=!!reg;fdOpen()}
 const fdItems=()=>fdIds.map(id=>items.find(x=>x.id===id)).filter(Boolean);
 function fdHTML(){const its=fdItems();return flat().map(({f,d})=>{const n=its.filter(i=>inF(i,f.id)).length,st=n&&n===its.length?'on':n?'mid':'';return `<button class="fr" style="padding-left:${12+d*18}px" onclick="fdTog('${f.id}')"><span class="cb ${st}">${st==='on'?ic('check',14):st==='mid'?'−':''}</span><span>${esc(f.name)}</span></button>`}).join('')}
 function fdOpen(){sheet(`<h2 style="margin-top:0">${esc(fdTitle)}</h2><p class="sub">${fdNote}チェックを付けるとフォルダに入り、外すとフォルダから出ます。グッズ自体は消えません。(${fdItems().length}件)</p><div id="fdl" class="fdl">${fdHTML()}</div><p class="sub" id="fdn" style="margin-top:8px"></p><button class="pri ghost" onclick="fnSheet('fd')">${ic('folderplus',18)} 新しいフォルダを作って追加</button><button class="pri ghost" onclick="fdAuto()">${ic('wand',18)} 入力した情報から自動でまとめる</button><button class="pri" onclick="fdDone()">完了</button>`)}
 function fdTog(fid){const its=fdItems(),all=its.length&&its.every(i=>inF(i,fid));its.forEach(i=>{const a=i.folders||[];i.folders=all?a.filter(x=>x!==fid):[...new Set([...a,fid])];put(i)});const L=$('#fdl');if(L){const y=L.scrollTop;L.innerHTML=fdHTML();L.scrollTop=y}}
-function fdDone(){closeS();selMode=false;sel.clear();render()}
+function fdDone(){fdReg=false;closeS();selMode=false;sel.clear();render()}
 function fdAuto(){const r=autoSort(fdItems());const L=$('#fdl');if(L)L.innerHTML=fdHTML();const n=$('#fdn');if(n)n.textContent=r.n?'入力した情報から、フォルダに追加しました(新しいフォルダ'+r.nf+'個)。':'振り分けられる情報(作品名・キャラクター名・グッズの種類・発売時期)が入力されていません。'}
 function newFolder(){fnSheet('col')}
-function fnSheet(m){const def=m==='col'&&cf&&cf!=='all'&&cf!=='unsorted'?cf:'';
-  sheet(`<h2 style="margin-top:0">新しいフォルダ</h2><label class="f fl" for="fn"><span>フォルダ名</span><span id="c-fn">0/50</span></label><textarea id="fn" class="ta" rows="1" maxlength="50" placeholder="例:星のしずく、イベント限定、2025年購入" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><label class="f" for="np">入れる場所</label><select id="np" class="ta" style="padding:11px 12px"><option value="">最上位(コレクション直下)</option>${flat().map(({f,d})=>`<option value="${f.id}"${f.id===def?' selected':''}>${'　'.repeat(d)}${esc(f.name)}</option>`).join('')}</select><button class="pri" onclick="fnMake('${m}')">${m==='fd'?'作成して追加':'作成'}</button><button class="pri ghost" onclick="${m==='fd'?'fdOpen()':'closeS()'}">キャンセル</button>`)}
-function fnMake(m){const n=$('#fn').value.trim();if(!n){$('#fn').focus();return}const id=uid();folders.push({id,name:n,parent:$('#np').value||null,at:Date.now()});saveF();
-  if(m==='fd'){fdItems().forEach(i=>{i.folders=[...new Set([...(i.folders||[]),id])];put(i)});fdOpen()}else{closeS();render()}}
+function fnSheet(m){sheet(`<h2 style="margin-top:0">新しいフォルダ</h2><p class="sub">${m==='fd'?'フォルダの名前を入力して「作成」を押すと、このグッズをそのフォルダに入れて終わります。':'フォルダの名前を入力して「作成」を押してください。'}</p><label class="f fl" for="fn"><span>フォルダ名</span><span id="c-fn">0/50</span></label><textarea id="fn" class="ta" rows="1" maxlength="50" placeholder="例:星のしずく" oninput="ag(this);fneClr()" onkeydown="if(event.key==='Enter'){event.preventDefault();fnMake('${m}')}"></textarea><p class="sub" id="fne" style="color:#e5484d;margin-top:8px"></p><button class="pri" onclick="fnMake('${m}')">作成</button><button class="pri ghost" onclick="${m==='fd'?'fdOpen()':'closeS()'}">キャンセル</button>`);setTimeout(()=>{const e=$('#fn');if(e)e.focus()},60)}
+function fneClr(){const e=$('#fne');if(e)e.textContent=''}
+function fnMake(m){const n=$('#fn').value.trim();if(!n){const e=$('#fne');if(e)e.textContent='フォルダ名を入力してください。';return}
+  const id=uid(),par=m==='col'&&cf&&cf!=='all'&&cf!=='unsorted'&&fById(cf)?cf:null;folders.push({id,name:n,parent:par,at:Date.now()});saveF();
+  if(m==='fd'){fdItems().forEach(i=>{i.folders=[...new Set([...(i.folders||[]),id])];put(i)});closeS();selMode=false;sel.clear();if(fdReg){fdReg=false;go('home')}else render()}
+  else{closeS();render()}}
 function autoMenu(){confirmDlg('登録したグッズの情報(作品名・キャラクター名・グッズの種類・発売時期)から、フォルダを自動で作って振り分けます。<br><small>今あるフォルダ分けは、そのまま残ります。</small>',()=>{const r=autoSort(live());render();sheet(`<h2 style="margin-top:0">自動でまとめました</h2><p>${r.n}件のグッズを振り分けました。<br>新しく作ったフォルダ:${r.nf}個</p><button class="pri" onclick="closeS()">OK</button>`)},'実行')}
 /* 確認ダイアログ・削除(ゴミ箱) */
 function confirmDlg(msg,ok,label,danger){dlgOk=ok;let d=$('#dlg');if(!d){d=document.createElement('div');d.id='dlg';document.body.appendChild(d)}
@@ -283,7 +287,7 @@ const fldHTML=([id,l,mx,ph],v)=>`<label class="f fl" for="${id}"><span>${l}</spa
 function add(useTmp,wd){if(!useTmp){tmp=null;kw=''}
   const ge=tmp&&tmp.genre?GEN.find(g=>g[0]===tmp.genre):null,pre={g:tmp&&tmp.genre||'',sz:ge&&!ge[5]&&!ge[6]?gsz(ge):'',mm:kw};
   sheet(`<h2 style="margin-top:0">グッズを登録</h2>${tmp?`<img class="pv" src="${tmp.img}" alt="">`:''}<div style="display:flex;gap:8px"><label class="btn ghost" style="margin-top:0">${ic('camera',18)} ${tmp?'撮り直す':'撮影'}<input type="file" accept="image/*" capture="environment" hidden onchange="pick(this.files[0])"></label><label class="btn ghost" style="margin-top:0">${ic('image',18)} 選ぶ<input type="file" accept="image/*" hidden onchange="pick(this.files[0])"></label></div>
-  <p class="sub" style="margin-top:10px">すべて空でも保存できます。分かるところだけ入力してください。</p>
+  <p class="sub" style="margin-top:10px">すべて空でも保存できます。分かるところだけ入力してください。(タイトルが空のときは「タイトル無し1」のように番号が付きます)</p>
   ${FLD.map(f=>fldHTML(f,pre[f[0]])).join('')}
   <label class="f" for="q">個数</label>${qHTML(1)}
   <label class="f"><input type="checkbox" id="wi"${wd?' checked':''}> 購入予定にする(まだ持っていない)</label>
@@ -292,24 +296,24 @@ function add(useTmp,wd){if(!useTmp){tmp=null;kw=''}
 const qHTML=v=>`<input type="number" id="q" value="${v}" min="1" inputmode="numeric" data-prev="${v}" placeholder="前回の個数: ${v}" onfocus="qp(this)">`;
 function qp(e){if(e.value)e.dataset.prev=e.value;e.placeholder='前回の個数: '+(e.dataset.prev||'1')}
 function editItem(id){const i=items.find(x=>x.id===id);if(!i)return;
-  const val={n:i.name==='(名前なし)'?'':i.name,w:i.work,c:i.chara,g:i.genre,sh:i.shop,pd:i.period,pr:i.price,sz:i.size,mm:i.memo};
+  const val={n:isUT(i.name)?'':i.name,w:i.work,c:i.chara,g:i.genre,sh:i.shop,pd:i.period,pr:i.price,sz:i.size,mm:i.memo};
   sheet(`<h2 style="margin-top:0">グッズを編集</h2>${i.img?`<img class="pv" src="${i.img}" alt="">`:''}
-  <p class="sub" style="margin-top:10px">すべて空でも保存できます。</p>
+  <p class="sub" style="margin-top:10px">すべて空でも保存できます。(タイトルが空のときは「タイトル無し1」のように番号が付きます)</p>
   ${FLD.map(f=>fldHTML(f,val[f[0]])).join('')}
   <label class="f" for="q">個数</label>${qHTML(i.qty)}
   <label class="f"><input type="checkbox" id="wi"${i.wish?' checked':''}> 購入予定にする(まだ持っていない)</label>
   <button class="pri" onclick="saveEdit('${i.id}')">保存する</button><button class="pri ghost" onclick="detail('${i.id}')">キャンセル</button>`);
   document.querySelectorAll('.ta').forEach(ag)}
 function saveEdit(id){const i=items.find(x=>x.id===id);if(!i)return;const v=k=>$('#'+k).value.trim(),g=v('g');
-  Object.assign(i,{name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('mm'),qty:Math.max(1,parseInt($('#q').value)||i.qty||1),wish:$('#wi').checked});
+  Object.assign(i,{name:v('n')||(/^タイトル無し\d+$/.test(i.name)?i.name:nextUntitled(i.id)),work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('mm'),qty:Math.max(1,parseInt($('#q').value)||i.qty||1),wish:$('#wi').checked});
   put(i);render();detail(id)}
 const FK=['n','w','c','g','sh','pd','pr','sz','mm','q','wi'];
 async function pick(f){if(!f)return;const keep=FK.map(k=>{const e=$('#'+k);return e?(k==='wi'?e.checked:e.value):''});
   try{tmp=await proc(f)}catch(e){return}
   add(true);FK.forEach((k,j)=>{const e=$('#'+k);if(!e)return;if(k==='wi')e.checked=keep[j];else{e.value=keep[j];if(e.classList.contains('ta'))ag(e);if(k==='q')qp(e)}})}
 function saveItem(){const v=k=>$('#'+k).value.trim(),g=v('g');
-  const i={id:Date.now().toString(36),name:v('n')||g||'(名前なし)',work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('mm'),qty:Math.max(1,parseInt($('#q').value)||1),wish:$('#wi').checked,img:tmp?tmp.img:'',feat:tmp?tmp.feat:null,at:Date.now()};
-  items.unshift(i);put(i);tmp=null;kw='';render();folderDlg([i.id],'どのフォルダに入れますか？','入れなくても大丈夫です(「未選別」に入ります)。あとからでも変えられます。')}
+  const i={id:Date.now().toString(36),name:v('n')||nextUntitled(),work:v('w'),chara:v('c'),genre:g,shop:v('sh'),period:v('pd'),price:v('pr'),size:v('sz'),memo:v('mm'),qty:Math.max(1,parseInt($('#q').value)||1),wish:$('#wi').checked,img:tmp?tmp.img:'',feat:tmp?tmp.feat:null,at:Date.now()};
+  items.unshift(i);put(i);tmp=null;kw='';render();folderDlg([i.id],'どのフォルダに入れますか？','入れなくても大丈夫です(「未選別」に入ります)。あとからでも変えられます。',1)}
 function detail(id,fr){const i=items.find(x=>x.id===id);if(!i)return;
   sheet(`${fr?'<button class="bk" onclick="review()">‹ 確認画面に戻る</button>':''}${i.del?'<p class="sub" style="margin-bottom:8px">ゴミ箱の中のグッズです。</p>':''}${i.img?`<img class="pv" src="${i.img}" alt="">`:'<div class="pv ph">'+ic('gift',64)+'</div>'}<h2>${esc(i.name)}</h2>${detRows(i)}${foldRows(i)}
   ${i.del?`<div class="kv"><small>個数</small><div>×${i.qty}</div></div>`:i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qty('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qty('${i.id}',1)" aria-label="増やす">＋</button></div>`}`,`<button class="dots" onclick="dotMenu('${i.id}')" aria-label="メニュー">${ic('more',18)}</button>`)}
@@ -465,7 +469,7 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.7(11/11 フォルダ・ゴミ箱)';
+const APP_VER='v1.9(11/12 フォルダ作成を簡単に・タイトル無し番号)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -521,5 +525,5 @@ function applyMode(){if(pm===mode)return;const d=document.createElement('div');d
 function applyBtn(){if(pend===cur)return;const d=document.createElement('div');d.className='ld';d.setAttribute('role','status');d.innerHTML='<div class="sp"></div><div>テーマを変更しています…</div>';document.body.appendChild(d);
   setTimeout(()=>{cur=pend;applyT(cur);try{localStorage.setItem('oshi-theme2',cur)}catch(e){}render();d.remove()},1000)}
 
-(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();render()})();
+(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();items.filter(i=>i.name==='(名前なし)'&&!i.del).sort((a,b)=>a.at-b.at).forEach(i=>{i.name=nextUntitled();put(i)});render()})();
 </script></body></html>
