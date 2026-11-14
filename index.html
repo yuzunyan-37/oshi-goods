@@ -193,7 +193,7 @@ document.addEventListener('scroll',()=>clearTimeout(lpT),true);
 function folderDlg(ids,title,note,reg){fdIds=ids;fdTitle=title||'フォルダに追加・移動';fdNote=note||'';fdReg=!!reg;fdOpen()}
 const fdItems=()=>fdIds.map(id=>items.find(x=>x.id===id)).filter(Boolean);
 function fdHTML(){const its=fdItems();return flat().map(({f,d})=>{const n=its.filter(i=>inF(i,f.id)).length,st=n&&n===its.length?'on':n?'mid':'';return `<button class="fr" style="padding-left:${12+d*18}px" onclick="fdTog('${f.id}')"><span class="cb ${st}">${st==='on'?ic('check',14):st==='mid'?'−':''}</span><span>${esc(f.name)}</span></button>`}).join('')}
-function fdOpen(){sheet(`<h2 style="margin-top:0">${esc(fdTitle)}</h2><p class="sub">${fdNote}チェックを付けるとフォルダに入り、外すとフォルダから出ます。グッズ自体は消えません。(${fdItems().length}件)</p><div id="fdl" class="fdl">${fdHTML()}</div><p class="sub" id="fdn" style="margin-top:8px"></p><button class="pri ghost" onclick="fnSheet('fd')">${ic('folderplus',18)} 新しいフォルダを作って追加</button><button class="pri ghost" onclick="fdAuto()">${ic('wand',18)} 入力した情報から自動でまとめる</button><button class="pri" onclick="fdDone()">完了</button>`)}
+function fdOpen(){sheet(`<h2 style="margin-top:0">${esc(fdTitle)}</h2><p class="sub">${fdNote}チェックを付けるとフォルダに入り、外すとフォルダから出ます。グッズ自体は消えません。(${fdItems().length}件)</p><div id="fdl" class="fdl">${fdHTML()}</div><p class="sub" id="fdn" style="margin-top:8px"></p><button class="pri ghost" onclick="fnSheet('fd')">${ic('folderplus',18)} 新しくフォルダを作成する</button><button class="pri ghost" onclick="fdAuto()">${ic('wand',18)} 入力した情報から自動でまとめる</button><button class="pri" onclick="fdDone()">完了</button>`)}
 function fdTog(fid){const its=fdItems(),all=its.length&&its.every(i=>inF(i,fid));its.forEach(i=>{const a=i.folders||[];i.folders=all?a.filter(x=>x!==fid):[...new Set([...a,fid])];put(i)});const L=$('#fdl');if(L){const y=L.scrollTop;L.innerHTML=fdHTML();L.scrollTop=y}}
 function fdDone(){fdReg=false;closeS();selMode=false;sel.clear();render()}
 function fdAuto(){const r=autoSort(fdItems());const L=$('#fdl');if(L)L.innerHTML=fdHTML();const n=$('#fdn');if(n)n.textContent=r.n?'入力した情報から、フォルダに追加しました(新しいフォルダ'+r.nf+'個)。':'振り分けられる情報(作品名・キャラクター名・グッズの種類・発売時期)が入力されていません。'}
@@ -469,7 +469,7 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.9(11/12 フォルダ作成を簡単に・タイトル無し番号)';
+const APP_VER='v1.10(11/15 フォルダ作成ボタンの文言)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
