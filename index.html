@@ -119,6 +119,12 @@ input[type=number]::placeholder{color:var(--sub);opacity:.75}
 #dlg{display:none;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:24px}#dlg.on{display:flex}
 .dbox{background:var(--card);color:var(--tx);border-radius:18px;padding:20px;width:100%;max-width:340px}.dbox p{margin:0 0 16px;line-height:1.6;font-size:15px}.dbox small{color:var(--sub)}
 .dbt{display:flex;gap:8px}.dbt button{flex:1;padding:12px;border-radius:12px;background:var(--pk2);color:var(--tx);font-size:15px}.dbt .dok{background:var(--pk);color:var(--on);font-weight:700}.dbt .dng{background:#e5484d;color:#fff}
+.ftw{position:relative;min-width:0}.ftw .ft{width:100%;height:100%}
+.fdots{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:none;color:var(--sub)}.fdots .ic{margin:0}
+.trt{display:flex;gap:6px;margin:14px 0 8px}.trt button{flex:1;padding:9px 4px;border-radius:12px;background:var(--card);color:var(--tx);font-size:12.5px;box-shadow:0 2px 10px var(--sh)}.trt .on{background:var(--pk);color:var(--on);font-weight:700}
+.hitw{display:flex;gap:6px;align-items:center;margin-top:8px}.hitw .hit{margin-top:0;flex:1;min-width:0}
+.rst{flex:none;padding:12px 14px;border-radius:12px;background:var(--pk);color:var(--on);font-size:13px;font-weight:700}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:86vw;background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:13px;z-index:50;display:none;text-align:center;line-height:1.5}#toast.on{display:block}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -153,7 +159,7 @@ function sim(a,b){let dot=0,hi=0;for(let i=0;i<256;i++)dot+=a.g[i]*b.g[i];for(le
 
 /* ---- 画面 ---- */
 /* ---- フォルダ・ゴミ箱 ---- */
-let folders=[],cf=null,selMode=false,sel=new Set(),lpT=0,lpF=0,lpX=0,lpY=0,fdIds=[],fdTitle='',fdNote='',fdReg=false,dlgOk=null,rp=null,rpF=null,qv=1;
+let folders=[],cf=null,selMode=false,sel=new Set(),lpT=0,lpF=0,lpX=0,lpY=0,fdIds=[],fdTitle='',fdNote='',fdReg=false,dlgOk=null,rp=null,rpF=null,qv=1,trTab='all';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const SYS=[['f-work','作品別'],['f-chara','キャラクター別'],['f-genre','グッズの種類別'],['f-period','発売時期別']];
 function loadF(){let a=[];try{a=JSON.parse(localStorage.getItem('oshi-folders')||'[]')}catch(e){}
@@ -161,24 +167,25 @@ function loadF(){let a=[];try{a=JSON.parse(localStorage.getItem('oshi-folders')|
 function saveF(){try{localStorage.setItem('oshi-folders',JSON.stringify(folders))}catch(e){}}
 const live=()=>items.filter(i=>!i.del);
 const own=()=>live().filter(i=>!i.wish),wish=()=>live().filter(i=>i.wish);
-const kids=p=>folders.filter(f=>f.parent===p),fById=id=>folders.find(f=>f.id===id),inF=(i,id)=>(i.folders||[]).includes(id);
+const kids=p=>folders.filter(f=>f.parent===p&&!f.del),fById=id=>folders.find(f=>f.id===id),inF=(i,id)=>(i.folders||[]).includes(id);
+const isUn=i=>!(i.folders||[]).some(id=>{const f=fById(id);return f&&!f.del});
 function desc(id){const r=[id];kids(id).forEach(k=>r.push(...desc(k.id)));return r}
 function fCount(id){const d=new Set(desc(id));return live().filter(i=>(i.folders||[]).some(x=>d.has(x))).length}
 function flat(p=null,d=0){return kids(p).flatMap(f=>[{f,d},...flat(f.id,d+1)])}
 function crumb(id){const r=[];let f=fById(id);while(f){r.unshift(f.name);f=fById(f.parent)}return r.join(' › ')}
-function ensureF(name,parent){let f=folders.find(x=>x.parent===parent&&x.name===name);if(!f){f={id:uid(),name,parent,at:Date.now()};folders.push(f)}return f.id}
+function ensureF(name,parent){const pf=fById(parent);if(pf&&pf.del)return null;let f=folders.find(x=>x.parent===parent&&x.name===name&&!x.del);if(!f){f={id:uid(),name,parent,at:Date.now()};folders.push(f)}return f.id}
 function autoSort(list){const b=folders.length;let n=0;
   list.forEach(i=>{const add=[];
     if(i.work)add.push(ensureF(i.work,'f-work'));
     (i.chara||'').split(/[、,，\/／・\n]+/).map(x=>x.trim()).filter(Boolean).forEach(c=>add.push(ensureF(c,'f-chara')));
     if(i.genre)add.push(ensureF(i.genre,'f-genre'));
     const y=(i.period||'').normalize('NFKC').match(/(\d{4})\s*年?/);if(y)add.push(ensureF(y[1]+'年','f-period'));
-    if(add.length){i.folders=[...new Set([...(i.folders||[]),...add])];put(i);n++}});
+    const ad=add.filter(Boolean);if(ad.length){i.folders=[...new Set([...(i.folders||[]),...ad])];put(i);n++}});
   saveF();return{n,nf:folders.length-b}}
 const isUT=n=>/^タイトル無し\d+$/.test(n)||n==='(名前なし)';
 function nextUntitled(ex){const u=new Set(live().filter(x=>x.id!==ex).map(x=>(String(x.name).match(/^タイトル無し(\d+)$/)||[])[1]).filter(Boolean).map(Number));let n=1;while(u.has(n))n++;return 'タイトル無し'+n}
 const itemsGrid=(a,m)=>a.length?`<div class="grid">${a.map(i=>card(i,1)).join('')}</div>`:`<div class="empty">${m}</div>`;
-const curItems=()=>cf==='all'?live():cf==='unsorted'?live().filter(i=>!(i.folders||[]).length):cf?live().filter(i=>inF(i,cf)):[];
+const curItems=()=>cf==='all'?live():cf==='unsorted'?live().filter(isUn):cf?live().filter(i=>inF(i,cf)):[];
 function openF(id){cf=id;selMode=false;sel.clear();render();scrollTo(0,0)}
 function backF(){const f=fById(cf);cf=(cf==='all'||cf==='unsorted'||!f)?null:f.parent;selMode=false;sel.clear();render();scrollTo(0,0)}
 function cardTap(id){if(lpF){lpF=0;return}if(selMode){sel.has(id)?sel.delete(id):sel.add(id);if(!sel.size)selMode=false;render()}else detail(id)}
@@ -213,13 +220,34 @@ function confirmDlg(msg,ok,label,danger){dlgOk=ok;let d=$('#dlg');if(!d){d=docum
 function dlgClose(){const d=$('#dlg');if(d)d.className=''}
 function dlgGo(){const f=dlgOk;dlgClose();if(f)f()}
 function askDel(id){confirmDlg('このグッズ情報を削除しますか？<br><small>削除すると、マイページの「ゴミ箱」に移ります。</small>',()=>{const i=items.find(x=>x.id===id);if(!i)return;i.del=Date.now();put(i);closeS();selMode=false;sel.clear();render()},'完了',1)}
+function descAll(id){return [id,...folders.filter(f=>f.parent===id).flatMap(f=>descAll(f.id))]}
+function fMenu(e,id){e.stopPropagation();const old=$('#fmn');if(old){old.remove();return}const r=e.currentTarget.getBoundingClientRect(),m=document.createElement('div');m.id='fmn';m.className='mn';m.style.cssText='position:fixed;top:'+(r.bottom+4)+'px;right:'+Math.max(8,innerWidth-r.right)+'px;min-width:150px;z-index:9';m.innerHTML=`<button class="rd" onclick="askDelF('${id}')">削除</button>`;document.body.appendChild(m);setTimeout(()=>document.addEventListener('click',()=>{const x=$('#fmn');if(x)x.remove()},{once:true}),0)}
+function askDelF(id){const f=fById(id);if(!f)return;confirmDlg('フォルダ「'+esc(f.name)+'」を削除しますか？<br><small>中のフォルダも一緒にゴミ箱へ移ります。入っているグッズ自体は削除されません。</small>',()=>{const ts=Date.now();desc(id).forEach(x=>{const g=fById(x);if(g){g.del=ts;g.delTop=x===id}});saveF();const c=fById(cf);if(c&&c.del)cf=null;render()},'完了',1)}
+function permF(id){const rm=new Set(descAll(id));folders=folders.filter(f=>!rm.has(f.id));items.forEach(i=>{if((i.folders||[]).some(x=>rm.has(x))){i.folders=i.folders.filter(x=>!rm.has(x));put(i)}});saveF()}
+function askPermF(id){confirmDlg('このフォルダを完全に削除しますか？<br><small>元に戻せません。入っていたグッズ自体は消えません。</small>',()=>{permF(id);closeS();render()},'完了',1)}
+function trashF(id){const f=fById(id);if(!f)return;const n=descAll(id).length-1,m=items.filter(i=>!i.del&&(i.folders||[]).includes(id)).length,pf=fById(f.parent),pn=pf&&pf.del?'<p class="sub" style="margin-top:10px">元の場所のフォルダもゴミ箱にあるため、復元すると、そのフォルダも一緒に戻ります。</p>':'';
+  sheet(`<h2 style="margin-top:0">${ic('folder',20)} ${esc(f.name)}</h2><p class="sub">ゴミ箱の中のフォルダです。</p><div class="kv"><small>元の場所</small><div>${esc(crumb(f.parent)||'コレクション直下')}</div></div><div class="kv"><small>中のフォルダ</small><div>${n}個</div></div><div class="kv"><small>入っていたグッズ</small><div>${m}件(グッズ自体は消えていません)</div></div>${pn}<button class="pri" onclick="restoreF('${id}')">元に戻す(復元)</button><button class="pri danger" style="border:1px solid #d6456b" onclick="askPermF('${id}')">完全に削除する</button>`)}
+function toast(t){let d=$('#toast');if(!d){d=document.createElement('div');d.id='toast';document.body.appendChild(d)}d.textContent=t;d.className='on';clearTimeout(toast.t);toast.t=setTimeout(()=>{d.className=''},2800)}
+function restoreG(id){const i=items.find(x=>x.id===id);if(!i||!i.del)return;delete i.del;put(i);closeS();render();toast('グッズ情報を元に戻しました')}
+function restoreF(id){const f=fById(id);if(!f||!f.del)return;
+  const chain=[];let a=fById(f.parent);while(a&&a.del){chain.unshift(a);a=fById(a.parent)}
+  chain.forEach((A,k)=>{const nx=chain[k+1]||f;folders.forEach(c=>{if(c.parent===A.id&&c.del&&c.del===A.del&&c.id!==nx.id)c.delTop=true});delete A.del;delete A.delTop});
+  const ts=f.del,ids=descAll(id).filter(x=>{const g=fById(x);return g&&g.del===ts});ids.forEach(x=>{const g=fById(x);delete g.del;delete g.delTop});
+  saveF();closeS();render();toast('フォルダ「'+f.name+'」を元に戻しました'+(ids.length>1?'(中のフォルダ'+(ids.length-1)+'個も一緒に)':'')+(chain.length?'。元の場所のフォルダ「'+chain.map(x=>x.name).join(' › ')+'」も一緒に戻しました':''))}
+function setTr(t){trTab=t;render()}
+function askEmpty(sc){sc=sc||trTab;const gs=items.filter(i=>i.del),fs=folders.filter(f=>f.del&&f.delTop),ng=sc==='folder'?0:gs.length,nf=sc==='goods'?0:fs.length;if(!(ng+nf))return;
+  const nm={all:'全部',goods:'グッズ画像',folder:'フォルダ'}[sc];
+  confirmDlg('「'+nm+'」の'+(ng+nf)+'件を、すべて完全に削除しますか？<br><small>'+(sc==='all'?'ゴミ箱の中の全部が対象です。':'いま開いている「'+nm+'」の分だけが対象です(ほかの種類は消えません)。')+'この操作は元に戻せません。</small>',()=>{
+    if(sc!=='folder'){const ids=items.filter(i=>i.del).map(i=>i.id);items=items.filter(i=>!i.del);ids.forEach(id=>del(id))}
+    if(sc!=='goods'){folders.filter(f=>f.del&&f.delTop).map(f=>f.id).forEach(permF)}
+    render()},'完了',1)}
 function askPerm(id){confirmDlg('ゴミ箱から完全に削除しますか？<br><small>この操作は元に戻せません。</small>',()=>{items=items.filter(x=>x.id!==id);del(id);closeS();render()},'完了',1)}
 function dotMenu(id){const old=$('#mn');if(old){old.remove();return}const i=items.find(x=>x.id===id);if(!i)return;
-  const b=i.del?[['perm','完全に削除する',1]]:[['edit','編集する'],['fold','フォルダに追加・移動'],['del','削除',1]];
+  const b=i.del?[['rst','元に戻す(復元)'],['perm','完全に削除する',1]]:[['edit','編集する'],['fold','フォルダに追加・移動'],['del','削除',1]];
   const m=document.createElement('div');m.id='mn';m.className='mn';m.innerHTML=b.map(([k,l,r])=>`<button class="${r?'rd':''}" onclick="mnGo('${k}','${id}')">${l}</button>`).join('');
   const h=document.querySelector('.sh');if(h)h.appendChild(m);setTimeout(()=>document.addEventListener('click',()=>{const x=$('#mn');if(x)x.remove()},{once:true}),0)}
-function mnGo(k,id){const m=$('#mn');if(m)m.remove();if(k==='edit')editItem(id);else if(k==='fold')folderDlg([id],'フォルダに追加・移動');else if(k==='del')askDel(id);else askPerm(id)}
-const foldRows=i=>{const a=(i.folders||[]).map(crumb).filter(Boolean);return a.length?`<div class="kv"><small>入っているフォルダ</small><div>${a.map(esc).join('<br>')}</div></div>`:''};
+function mnGo(k,id){const m=$('#mn');if(m)m.remove();if(k==='edit')editItem(id);else if(k==='fold')folderDlg([id],'フォルダに追加・移動');else if(k==='del')askDel(id);else if(k==='rst')restoreG(id);else askPerm(id)}
+const foldRows=i=>{const a=(i.folders||[]).filter(id=>{const f=fById(id);return f&&!f.del}).map(crumb).filter(Boolean);return a.length?`<div class="kv"><small>入っているフォルダ</small><div>${a.map(esc).join('<br>')}</div></div>`:''};
 
 function card(i,c){const s=c&&sel.has(i.id);return `<button class="gc${s?' sl':''}"${c?` data-id="${i.id}" onclick="cardTap('${i.id}')" oncontextmenu="return false"`:` onclick="detail('${i.id}')"`}>${c&&selMode?`<span class="ck${s?' on':''}">${s?ic('check',14):''}</span>`:''}<div class="ph">${i.img?`<img src="${i.img}" alt="">`:ic('gift',34)}</div><b>${esc(i.name)}</b><small>${esc(i.work)||'作品名なし'}</small>${i.chara?`<span class="tag">${esc(i.chara)}</span>`:''}${i.wish?'<span class="tag">購入予定</span>':`<i class="q">×${i.qty}</i>`}</button>`}
 function list(a,msg){return a.length?`<div class="grid">${a.map(i=>card(i)).join('')}</div>`:`<div class="empty">${msg}</div>`}
@@ -231,20 +259,24 @@ return `<h1>推しグッズ管理 ♥</h1><p class="sub">好きなものを、�
 <h2>クイックメニュー</h2><div class="qm"><button onclick="pickSheet('add')"><em>${ic('plus')}</em>グッズを登録</button><button onclick="go('col')"><em>${ic('folder')}</em>コレクション</button><button onclick="go('wish')"><em>${ic('bag')}</em>購入予定</button><button onclick="go('find')"><em>${ic('search')}</em>検索</button></div>
 <h2>最近登録したグッズ</h2>${rec.length?`<div class="row">${rec.map(i=>card(i)).join('')}</div>`:'<div class="empty">まだグッズがありません。<br>「グッズを登録」から1つ追加してみましょう。</div>'}`},
 col(){const sp=cf==='all'||cf==='unsorted';const f=!sp&&cf?fById(cf):null;if(cf&&!sp&&!f)cf=null;
-  const L=live(),un=L.filter(i=>!(i.folders||[]).length);
+  const L=live(),un=L.filter(isUn);
   const back=cf===null?'':`<button class="bk" onclick="backF()">‹ ${sp||!f||!f.parent?'コレクション':esc((fById(f.parent)||{}).name||'')}</button>`;
   const title=sp?(cf==='all'?'全ての画像':'未選別の画像'):f?esc(f.name):'コレクション';
   const hd=`<div class="hdr"><h1>${title}</h1><div class="hacts"><button class="bell" onclick="newFolder()" aria-label="フォルダを作成">${ic('folderplus',20)}</button><button class="bell" onclick="autoMenu()" aria-label="自動でフォルダにまとめる">${ic('wand',20)}</button></div></div>`;
   const sub=k=>fCount(k.id)+'件'+(kids(k.id).length?' ・ フォルダ'+kids(k.id).length:'');
-  const tile=(id,n,t,c)=>`<button class="ft${c?' ftx':''}" onclick="openF('${id}')">${ic('folder',26)}<b>${esc(n)}</b><small>${t}</small></button>`;
+  const tile=(id,n,t,c)=>`<div class="ftw"><button class="ft${c?' ftx':''}" onclick="openF('${id}')">${ic('folder',26)}<b>${esc(n)}</b><small>${t}</small></button>${c?'':`<button class="fdots" onclick="fMenu(event,'${id}')" aria-label="フォルダのメニュー">${ic('more',18)}</button>`}</div>`;
   let body='';
   if(cf===null)body=`<p class="sub">グッズを長押しすると、まとめて選んでフォルダに入れられます。</p><div class="fg" style="margin-top:12px">${tile('all','全ての画像(グッズ情報画像)',L.length+'件',1)}${tile('unsorted','未選別の画像(グッズ情報画像)',un.length+'件',1)}${kids(null).map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`;
   else if(sp)body=itemsGrid(cf==='all'?L:un,cf==='all'?'まだ登録がありません。':'未選別のグッズはありません。');
   else{const ks=kids(cf);body=(ks.length?`<h2>フォルダ</h2><div class="fg">${ks.map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`:'')+'<h2>グッズ</h2>'+itemsGrid(L.filter(i=>inF(i,cf)),'このフォルダには、まだグッズがありません。グッズを長押しして選び、「フォルダに追加・移動」から入れられます。')}
   const bars=selMode?`<div class="selt"><button onclick="selOff()" aria-label="選択をやめる">${ic('x',18)}</button><b>${sel.size}件を選択中</b><button class="selall" onclick="selAll()">すべて選択</button></div><div class="selb"><button class="pri" onclick="selFold()">${ic('folder',18)} フォルダに追加・移動</button></div>`:'';
   return `${back}${hd}${body}${bars}`},
-trash(){const a=items.filter(i=>i.del).sort((x,y)=>y.del-x.del);
-  return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>ゴミ箱</h1><p class="sub">削除したグッズ情報は、ここにだけ残ります。ここから削除すると完全に消えて、元に戻せません。</p><div style="height:12px"></div>${a.length?a.map(i=>`<button class="hit" onclick="detail('${i.id}')">${i.img?`<img src="${i.img}" alt="">`:`<div class="ph">${ic('gift',22)}</div>`}<div><b>${esc(i.work)||'作品名なし'}</b></div></button>`).join(''):'<div class="empty">ゴミ箱は空です。</div>'}`},
+trash(){const gs=items.filter(i=>i.del),fs=folders.filter(f=>f.del&&f.delTop),T=trTab;
+  const rows=[...(T!=='folder'?gs.map(i=>({d:i.del,i})):[]),...(T!=='goods'?fs.map(f=>({d:f.del,f})):[])].sort((a,b)=>b.d-a.d);
+  const tabs=[['all','全部',gs.length+fs.length],['goods','グッズ画像',gs.length],['folder','フォルダ',fs.length]];
+  const lbl={all:'ゴミ箱の中をすべて',goods:'グッズ画像をすべて',folder:'フォルダをすべて'}[T];
+  const row=r=>r.i?`<div class="hitw"><button class="hit" onclick="detail('${r.i.id}')">${r.i.img?`<img src="${r.i.img}" alt="">`:`<div class="ph">${ic('gift',22)}</div>`}<div><b>${esc(r.i.work)||'作品名なし'}</b></div></button><button class="rst" onclick="restoreG('${r.i.id}')">復元</button></div>`:`<div class="hitw"><button class="hit" onclick="trashF('${r.f.id}')"><div class="ph">${ic('folder',22)}</div><div><b>${esc(r.f.name)}</b><small class="sub">フォルダ ・ 中のフォルダ${descAll(r.f.id).length-1}個</small></div></button><button class="rst" onclick="restoreF('${r.f.id}')">復元</button></div>`;
+  return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>ゴミ箱</h1><p class="sub">削除したグッズ情報・フォルダは、ここにだけ残ります。ここから削除すると完全に消えて、元に戻せません。</p><div class="trt">${tabs.map(([k,n,c])=>`<button class="${T===k?'on':''}" onclick="setTr('${k}')">${n}(${c})</button>`).join('')}</div>${rows.length?`<button class="pri danger" style="margin:6px 0 12px;border:1px solid #d6456b" onclick="askEmpty('${T}')">${ic('trash',18)} ${lbl}完全に削除(${rows.length}件)</button>`:''}${rows.length?rows.map(row).join(''):'<div class="empty">ここには何もありません。</div>'}`},
 wish(){return `<div class="hdr"><h1>購入予定リスト</h1><button class="bell" onclick="pickSheet('wish')" aria-label="購入予定を追加">${ic('plus',20)}</button></div><p class="sub">欲しいグッズをチェック。買ったらタップして所持に移せます。</p><div style="height:12px"></div>${list(wish(),'購入予定はありません。<br>右上の＋から、写真を撮るか画像を選んで追加できます。')}`},
 theme(){return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>テーマ</h1><p class="sub">アプリ全体の色合いを選べます。選んだら「適用」を押してください。</p><div class="swg">${T.map((t,i)=>`<button class="sw ${pend===i?'on':''}" onclick="pickT(${i})" aria-pressed="${pend===i}"><i style="background:${t.sw||pal(t,isDark()).pk};color:${t.sw==='#fff'?'#333':pal(t,isDark()).on}">${pend===i?ic('check',20):''}</i><span>${t.n}${cur===i?'<br>(使用中)':''}</span></button>`).join('')}</div><button class="pri" onclick="applyBtn()" ${pend===cur?'disabled':''}>適用</button>`},
 notice(){return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>お知らせ</h1><div class="empty">お知らせはありません。<br>アプリの更新情報などが届くと、ここに表示されます。</div>`},
@@ -252,11 +284,11 @@ acc(){return `<button class="bk" onclick="openSet()">‹ 設定</button><h1>ア�
 set(){const o=[['auto','端末に合わせる','スマホの設定に合わせて切り替わります。'],['light','ライトモード','明るい配色で表示します。'],['dark','ダークモード','暗い配色で表示します。']];
 return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>設定</h1><button class="rb" onclick="go('acc')"><span>${ic('user',20)} アカウント</span><small>›</small></button><h2>表示モード</h2>${o.map(([k,n,d])=>`<button class="rb" onclick="pickM('${k}')" aria-pressed="${pm===k}"><span>${n}${mode===k?'(使用中)':''}<br><small>${d}</small></span><b style="color:var(--ac)">${pm===k?ic('check',20):''}</b></button>`).join('')}<p class="sub" style="margin:10px 0 0">ライトはパステル、ダークはダスティな色合いになります。白と黒のテーマは変わりません。</p><button class="pri" onclick="applyMode()" ${pm===mode?'disabled':''}>適用</button>`},
 find(){return `<h1>検索</h1><textarea id="q" class="ta" rows="1" placeholder="商品名・キャラ名・作品名など" oninput="ag(this);doFind(this.value)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><div id="sr" style="margin-top:12px"></div>`},
-me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
+me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length+folders.filter(f=>f.del&&f.delTop).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
 };
 function doFind(v){v=v.trim().toLowerCase();const r=v?live().filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
 function setF(w){flt=w;render()}
-function go(v){view=v;flt='';if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
+function go(v){view=v;flt='';if(v==='trash')trTab='all';if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
 function render(){
   $('#m').innerHTML=V[view]();
   const t=[['home','home','ホーム'],['col','folder','コレクション'],['cam','camera',''],['wish','bag','購入予定'],['me','user','マイページ']];
@@ -318,7 +350,7 @@ function saveItem(){const v=k=>$('#'+k).value.trim(),g=v('g');
   rp=i;rpF=JSON.stringify(folders);tmp=null;kw='';folderDlg([i.id],'どのフォルダに入れますか？','「完了」を押すと、グッズが登録されます。途中で閉じると、登録されません。フォルダに入れなくても大丈夫です(「未選別」に入ります)。',1)}
 function detail(id,fr){const i=items.find(x=>x.id===id);if(!i)return;qv=i.qty;
   sheet(`${fr?'<button class="bk" onclick="review()">‹ 確認画面に戻る</button>':''}${i.del?'<p class="sub" style="margin-bottom:8px">ゴミ箱の中のグッズです。</p>':''}${i.img?`<img class="pv" src="${i.img}" alt="">`:'<div class="pv ph">'+ic('gift',64)+'</div>'}<h2>${esc(i.name)}</h2>${detRows(i)}${foldRows(i)}
-  ${i.del?`<div class="kv"><small>個数</small><div>×${i.qty}</div></div>`:i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qAdj('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qAdj('${i.id}',1)" aria-label="増やす">＋</button></div><p class="sub" id="qm" style="margin-top:6px">＋−で個数を変えたあと、「適用」を押すと保存されます。</p><button class="pri" id="qap" onclick="qApply('${i.id}')" disabled>適用</button>`}`,`<button class="dots" onclick="dotMenu('${i.id}')" aria-label="メニュー">${ic('more',18)}</button>`)}
+  ${i.del?`<div class="kv"><small>個数</small><div>×${i.qty}</div></div><button class="pri" onclick="restoreG('${i.id}')">元に戻す(復元)</button>`:i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qAdj('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qAdj('${i.id}',1)" aria-label="増やす">＋</button></div><p class="sub" id="qm" style="margin-top:6px">＋−で個数を変えたあと、「適用」を押すと保存されます。</p><button class="pri" id="qap" onclick="qApply('${i.id}')" disabled>適用</button>`}`,`<button class="dots" onclick="dotMenu('${i.id}')" aria-label="メニュー">${ic('more',18)}</button>`)}
 function qAdj(id,d){const i=items.find(x=>x.id===id);if(!i)return;qv=Math.max(1,qv+d);const n=$('#qn');if(n)n.textContent='×'+qv+(qv!==i.qty?'(未適用)':'');const b=$('#qap');if(b)b.disabled=qv===i.qty;const m=$('#qm');if(m)m.textContent=qv!==i.qty?'「適用」を押すと、'+i.qty+'個 → '+qv+'個に変わります。':'＋−で個数を変えたあと、「適用」を押すと保存されます。'}
 function qApply(id){const i=items.find(x=>x.id===id);if(!i||qv===i.qty)return;i.qty=qv;put(i);const n=$('#qn');if(n)n.textContent='×'+i.qty;const b=$('#qap');if(b)b.disabled=true;const m=$('#qm');if(m)m.textContent='個数を'+i.qty+'個に保存しました。';render()}
 function own1(id){const i=items.find(x=>x.id===id);i.wish=false;put(i);closeS();render()}
@@ -472,7 +504,7 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.12(11/15 フォルダ名なしで作成)';
+const APP_VER='v1.15(11/15 ゴミ箱から復元)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
