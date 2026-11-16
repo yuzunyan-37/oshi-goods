@@ -125,6 +125,7 @@ input[type=number]::placeholder{color:var(--sub);opacity:.75}
 .hitw{display:flex;gap:6px;align-items:center;margin-top:8px}.hitw .hit{margin-top:0;flex:1;min-width:0}
 .rst{flex:none;padding:12px 14px;border-radius:12px;background:var(--pk);color:var(--on);font-size:13px;font-weight:700}
 #toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:86vw;background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:13px;z-index:50;display:none;text-align:center;line-height:1.5}#toast.on{display:block}
+.pv{aspect-ratio:auto;object-fit:contain;max-height:60vh}.pv.ph{aspect-ratio:1}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -147,13 +148,14 @@ async function proc(file){
   const W=im.naturalWidth,H=im.naturalHeight,s=Math.min(W,H);
   const c=document.createElement('canvas');c.width=c.height=360;
   c.getContext('2d').drawImage(im,(W-s)/2,(H-s)/2,s,s,0,0,360,360);
+  const sc=Math.min(1,640/Math.max(W,H)),c2=document.createElement('canvas');c2.width=Math.max(1,Math.round(W*sc));c2.height=Math.max(1,Math.round(H*sc));c2.getContext('2d').drawImage(im,0,0,c2.width,c2.height);
   URL.revokeObjectURL(url);
   const f=document.createElement('canvas');f.width=f.height=16;
   const x=f.getContext('2d');x.drawImage(c,0,0,16,16);
   const d=x.getImageData(0,0,16,16).data,g=[],h=new Array(64).fill(0);
   for(let i=0;i<d.length;i+=4){g.push(.3*d[i]+.59*d[i+1]+.11*d[i+2]);h[(d[i]>>6)*16+(d[i+1]>>6)*4+(d[i+2]>>6)]++}
   const mean=g.reduce((a,b)=>a+b)/g.length,sd=Math.sqrt(g.reduce((a,b)=>a+(b-mean)**2,0)/g.length)||1;
-  return{img:c.toDataURL('image/jpeg',.8),feat:{g:g.map(v=>(v-mean)/sd),h:h.map(v=>v/256)}};
+  return{img:c2.toDataURL('image/jpeg',.82),feat:{g:g.map(v=>(v-mean)/sd),h:h.map(v=>v/256)}};
 }
 function sim(a,b){let dot=0,hi=0;for(let i=0;i<256;i++)dot+=a.g[i]*b.g[i];for(let i=0;i<64;i++)hi+=Math.min(a.h[i],b.h[i]);return .4*Math.max(0,dot/256)+.6*hi}
 
@@ -287,7 +289,6 @@ find(){return `<h1>検索</h1><textarea id="q" class="ta" rows="1" placeholder="
 me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length+folders.filter(f=>f.del&&f.delTop).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
 };
 function doFind(v){v=v.trim().toLowerCase();const r=v?live().filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
-function setF(w){flt=w;render()}
 function go(v){view=v;flt='';if(v==='trash')trTab='all';if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
 function render(){
   $('#m').innerHTML=V[view]();
@@ -350,7 +351,7 @@ function saveItem(){const v=k=>$('#'+k).value.trim(),g=v('g');
   rp=i;rpF=JSON.stringify(folders);tmp=null;kw='';folderDlg([i.id],'どのフォルダに入れますか？','「完了」を押すと、グッズが登録されます。途中で閉じると、登録されません。フォルダに入れなくても大丈夫です(「未選別」に入ります)。',1)}
 function detail(id,fr){const i=items.find(x=>x.id===id);if(!i)return;qv=i.qty;
   sheet(`${fr?'<button class="bk" onclick="review()">‹ 確認画面に戻る</button>':''}${i.del?'<p class="sub" style="margin-bottom:8px">ゴミ箱の中のグッズです。</p>':''}${i.img?`<img class="pv" src="${i.img}" alt="">`:'<div class="pv ph">'+ic('gift',64)+'</div>'}<h2>${esc(i.name)}</h2>${detRows(i)}${foldRows(i)}
-  ${i.del?`<div class="kv"><small>個数</small><div>×${i.qty}</div></div><button class="pri" onclick="restoreG('${i.id}')">元に戻す(復元)</button>`:i.wish?`<button class="pri" onclick="own1('${i.id}')">買った!所持に移す</button>`:`<div class="qt"><button onclick="qAdj('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qAdj('${i.id}',1)" aria-label="増やす">＋</button></div><p class="sub" id="qm" style="margin-top:6px">＋−で個数を変えたあと、「適用」を押すと保存されます。</p><button class="pri" id="qap" onclick="qApply('${i.id}')" disabled>適用</button>`}`,`<button class="dots" onclick="dotMenu('${i.id}')" aria-label="メニュー">${ic('more',18)}</button>`)}
+  ${i.del?`<div class="kv"><small>個数</small><div>×${i.qty}</div></div><button class="pri" onclick="restoreG('${i.id}')">元に戻す(復元)</button>`:i.wish?`<button class="pri" onclick="own1('${i.id}')">買った！所持に移す</button>`:`<div class="qt"><button onclick="qAdj('${i.id}',-1)" aria-label="減らす">−</button><b style="font-size:22px" id="qn">×${i.qty}</b><button onclick="qAdj('${i.id}',1)" aria-label="増やす">＋</button></div><p class="sub" id="qm" style="margin-top:6px">＋−で個数を変えたあと、「適用」を押すと保存されます。</p><button class="pri" id="qap" onclick="qApply('${i.id}')" disabled>適用</button>`}`,`<button class="dots" onclick="dotMenu('${i.id}')" aria-label="メニュー">${ic('more',18)}</button>`)}
 function qAdj(id,d){const i=items.find(x=>x.id===id);if(!i)return;qv=Math.max(1,qv+d);const n=$('#qn');if(n)n.textContent='×'+qv+(qv!==i.qty?'(未適用)':'');const b=$('#qap');if(b)b.disabled=qv===i.qty;const m=$('#qm');if(m)m.textContent=qv!==i.qty?'「適用」を押すと、'+i.qty+'個 → '+qv+'個に変わります。':'＋−で個数を変えたあと、「適用」を押すと保存されます。'}
 function qApply(id){const i=items.find(x=>x.id===id);if(!i||qv===i.qty)return;i.qty=qv;put(i);const n=$('#qn');if(n)n.textContent='×'+i.qty;const b=$('#qap');if(b)b.disabled=true;const m=$('#qm');if(m)m.textContent='個数を'+i.qty+'個に保存しました。';render()}
 function own1(id){const i=items.find(x=>x.id===id);i.wish=false;put(i);closeS();render()}
@@ -504,7 +505,7 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.15(11/15 ゴミ箱から復元)';
+const APP_VER='v1.16(11/15 点検・見やすさと画像の修正)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -529,26 +530,17 @@ check:'<path d="M5 12l5 5 9-10"/>'};
 const ic=(n,z=22)=>`<svg class="ic" width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IP[n]}</svg>`;
 
 /* ---- テーマ ---- */
-const T0=[
-{n:'薄ピンク',l:['#fff1f5','#ee6a99','#fde1ea','#f8d3df'],d:['#241a1f','#f48fb1','#4a2f3a','#4a3641']},
-{n:'水色',l:['#eef7fd','#3b8fc4','#d9edf9','#cfe5f3'],d:['#1a2229','#7cc0ea','#2a3e4d','#33495a']},
-{n:'ミント',l:['#eefaf4','#2a9d73','#d6f3e6','#c6e8d8'],d:['#18241f','#6fd1a8','#274236','#31503f']},
-{n:'ラベンダー',l:['#f5f0fd','#8a66cc','#e6dcf8','#dccff2'],d:['#1f1b29','#b79df0','#352c4a','#413759']},
-{n:'クリーム',l:['#fffbea','#cf8f10','#fcf0c4','#f2e4ac'],d:['#26231a','#efc45d','#473f24','#554b2c']},
-{n:'ベージュ',l:['#f8f2ea','#a67647','#eadccb','#e0d0bb'],d:['#231f1a','#d3a87c','#41362b','#4f4234']}];
 const T=[['ピンク',338,85,55],['ローズ',355,70,52],['コーラル',12,85,52],['ピーチ',25,90,46],['クリーム',45,90,38],['レモン',55,85,34],['ライム',85,60,34],['ミント',150,55,34],['ターコイズ',175,65,32],['水色',200,75,42],['スカイ',215,80,48],['コバルト',230,70,55],['ラベンダー',260,65,58],['ライラック',285,55,52],['ベリー',310,55,48],['ベージュ',30,35,40],
 ['白',0,0,38,{sw:'#fff',l:{bg:'hsl(0 0% 93%)',bg2:'hsl(0 0% 89%)',card:'hsl(0 0% 98%)',pk:'hsl(0 0% 32%)',pk2:'hsl(0 0% 90%)',ln:'hsl(0 0% 84%)',tx:'hsl(0 0% 18%)',sub:'hsl(0 0% 42%)',sh:'hsl(0 0% 0% / .10)'},d:{bg:'hsl(0 0% 93%)',bg2:'hsl(0 0% 89%)',card:'hsl(0 0% 98%)',pk:'hsl(0 0% 32%)',pk2:'hsl(0 0% 90%)',ln:'hsl(0 0% 84%)',tx:'hsl(0 0% 18%)',sub:'hsl(0 0% 42%)',on:'#fff',sh:'hsl(0 0% 0% / .10)'}}],
 ['黒',0,0,10,{sw:'#000',l:{bg:'hsl(0 0% 90%)',bg2:'hsl(0 0% 81%)',card:'hsl(0 0% 97%)',pk:'hsl(0 0% 10%)',pk2:'hsl(0 0% 78%)',ln:'hsl(0 0% 68%)',tx:'hsl(0 0% 8%)',sub:'hsl(0 0% 32%)'},d:{bg:'hsl(0 0% 8%)',bg2:'hsl(0 0% 13%)',card:'hsl(0 0% 18%)',pk:'hsl(0 0% 80%)',pk2:'hsl(0 0% 26%)',ln:'hsl(0 0% 30%)',tx:'hsl(0 0% 95%)',sub:'hsl(0 0% 65%)',on:'hsl(0 0% 6%)'}}]].map(([n,h,s,p,x])=>({n,h,s,p,x,sw:x&&x.sw}));
 const hs=(h,s,l)=>`hsl(${h} ${Math.round(s)}% ${l}%)`;
 function pal(t,dk){return t.x?Object.assign(pal0(t,0),t.x.l,{on:'#fff'}):pal0(t,dk)}
-function pal0(t,dk){const{h,s,p}=t;return dk?{bg:hs(h,s*.22,13),bg2:hs(h,s*.26,18),card:hs(h,s*.2,20),pk:hs(h,s*.45,62),pk2:hs(h,s*.22,29),ln:hs(h,s*.2,34),tx:hs(h,22,92),sub:hs(h,12,70),on:hs(h,30,12),ac:hs(h,s*.5,74),sh:'rgba(0,0,0,.35)'}:{bg:hs(h,s*.8,96),bg2:hs(h,s*.9,92),card:hs(h,s*.45,99),pk:hs(h,s*.8,76),pk2:hs(h,s*.85,91),ln:hs(h,s*.65,85),tx:hs(h,32,26),sub:hs(h,16,44),on:hs(h,40,20),ac:hs(h,s,Math.min(p,40)),sh:`hsl(${h} ${s}% 50% / .14)`}}
-function pal00(t,dk){const{h,s,p}=t;return dk?{bg:hs(h,s*.3,11),bg2:hs(h,s*.35,16),card:hs(h,s*.28,17),pk:hs(h,s*.8,70),pk2:hs(h,s*.35,26),ln:hs(h,s*.3,31),tx:hs(h,40,93),sub:hs(h,18,72),on:hs(h,45,11),sh:'rgba(0,0,0,.35)'}:{bg:hs(h,s*.9,95),bg2:hs(h,s,90),card:hs(h,s*.5,99),pk:hs(h,s,p),pk2:hs(h,s*.9,89),ln:hs(h,s*.7,81),tx:hs(h,35,24),sub:hs(h,18,42),on:'#fff',sh:`hsl(${h} ${s}% ${p}% / .16)`}}
+function pal0(t,dk){const{h,s,p}=t;return dk?{bg:hs(h,s*.22,13),bg2:hs(h,s*.26,18),card:hs(h,s*.2,20),pk:hs(h,s*.45,62),pk2:hs(h,s*.22,29),ln:hs(h,s*.2,34),tx:hs(h,22,92),sub:hs(h,12,70),on:hs(h,30,12),ac:hs(h,s*.5,78),sh:'rgba(0,0,0,.35)'}:{bg:hs(h,s*.8,96),bg2:hs(h,s*.9,92),card:hs(h,s*.45,99),pk:hs(h,s*.8,76),pk2:hs(h,s*.85,91),ln:hs(h,s*.65,85),tx:hs(h,32,26),sub:hs(h,16,38),on:hs(h,40,20),ac:hs(h,s,h>=35&&h<=100?26:h>=140&&h<=190?26:Math.min(p,34)),sh:`hsl(${h} ${s}% 50% / .14)`}}
 function applyT(i){const dk=isDark(),p=pal(T[i],dk),s=document.documentElement.style;for(const k in p)s.setProperty('--'+k,p[k]);s.colorScheme=dk&&!T[i].x?'dark':'light'}
 let cur=0,pend=0,mode='auto',pm='auto';
 try{const m=localStorage.getItem('oshi-mode');if(m==='light'||m==='dark')mode=m}catch(e){}
 const isDark=()=>mode==='dark'||(mode==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
 try{const s=parseInt(localStorage.getItem('oshi-theme2'));if(s>=0&&s<T.length)cur=s}catch(e){}
-function applyT0(i){const dk=matchMedia('(prefers-color-scheme: dark)').matches,p=T[i][dk?'d':'l'],s=document.documentElement.style;['--bg','--pk','--pk2','--ln'].forEach((k,j)=>s.setProperty(k,p[j]))}
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>applyT(cur))}catch(e){}
 applyT(cur);
 function openTheme(){pend=cur;view='theme';render();scrollTo(0,0)}
