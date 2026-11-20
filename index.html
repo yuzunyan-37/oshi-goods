@@ -126,6 +126,14 @@ input[type=number]::placeholder{color:var(--sub);opacity:.75}
 .rst{flex:none;padding:12px 14px;border-radius:12px;background:var(--pk);color:var(--on);font-size:13px;font-weight:700}
 #toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:86vw;background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:13px;z-index:50;display:none;text-align:center;line-height:1.5}#toast.on{display:block}
 .pv{aspect-ratio:auto;object-fit:contain;max-height:60vh}.pv.ph{aspect-ratio:1}
+.mycard{background:var(--card);border-radius:16px;padding:14px;margin-top:12px;box-shadow:0 2px 10px var(--sh)}
+.idrow{display:flex;align-items:center;justify-content:space-between;gap:8px}.idv{font-size:24px;letter-spacing:.04em;color:var(--ac);font-variant-numeric:tabular-nums}
+.fr2{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:10px 12px;margin-top:8px}
+.fr2 .av{flex:none;width:38px;height:38px;border-radius:50%;background:var(--pk2);color:var(--ac);display:grid;place-items:center;font-weight:700}
+.fr2 .fm{flex:1;min-width:0}.fr2 .fm b{display:block;overflow-wrap:anywhere}.fr2 .fm small{color:var(--sub);font-size:12px}
+.sm{flex:none;padding:9px 12px;border-radius:99px;background:var(--pk);color:var(--on);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:4px}.sm.gh{background:var(--pk2);color:var(--tx);font-weight:400}.sm.dg{background:none;color:#e5484d;font-weight:400;border:1px solid #e5484d}.sm .ic{margin:0}
+.tg{flex:none;font-size:12px;color:var(--sub);padding:6px 10px;border-radius:99px;background:var(--pk2)}
+details.demo{margin-top:16px;background:var(--card);border-radius:14px;padding:10px 14px;font-size:13px}details.demo summary{cursor:pointer;color:var(--sub)}details.demo .row2{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -273,6 +281,24 @@ col(){const sp=cf==='all'||cf==='unsorted';const f=!sp&&cf?fById(cf):null;if(cf&
   else{const ks=kids(cf);body=(ks.length?`<h2>フォルダ</h2><div class="fg">${ks.map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`:'')+'<h2>グッズ</h2>'+itemsGrid(L.filter(i=>inF(i,cf)),'このフォルダには、まだグッズがありません。グッズを長押しして選び、「フォルダに追加・移動」から入れられます。')}
   const bars=selMode?`<div class="selt"><button onclick="selOff()" aria-label="選択をやめる">${ic('x',18)}</button><b>${sel.size}件を選択中</b><button class="selall" onclick="selAll()">すべて選択</button></div><div class="selb"><button class="pri" onclick="selFold()">${ic('folder',18)} フォルダに追加・移動</button></div>`:'';
   return `${back}${hd}${body}${bars}`},
+friends(){const back=`<button class="bk" onclick="go('me')">‹ マイページ</button>`;
+  if(!FS.me)return `${back}<h1>フレンド</h1><p class="sub">ログインすると、自分のユーザーIDが発行されて、フレンドを追加できます。</p><div class="empty" style="margin-top:14px;text-align:left"><b>デモモードです</b><br>いまは、この端末の中だけで動く、お試し版です。本物のフレンド機能(ほかの人との申請・承認)には、サーバーとGoogleログインの設定が必要です。</div><button class="pri" onclick="friendsLogin()">Googleでログイン(デモ)</button>`;
+  const L=FS.l,m=FS.me;
+  const row=(x,act)=>`<div class="fr2"><div class="av">${esc(Array.from(x.name)[0]||'?')}</div><div class="fm"><b>${esc(x.name)}</b><small>${dfmt(x.code)}</small></div>${act||''}</div>`;
+  const rs=FS.res,act=rs&&!rs.none?({none:`<button class="sm" onclick="friendsSend('${rs.uid}')">申請を送る</button>`,sent:'<span class="tg">申請済み</span>',friend:'<span class="tg">フレンド</span>',self:'<span class="tg">あなた</span>',received:`<button class="sm" onclick="friendsAccept('${rs.reqId}')">承認する</button>`})[rs.rel]:'';
+  const res=rs===undefined?'':rs.none?'<div class="empty" style="margin-top:10px">見つかりませんでした。ユーザーIDが正しいか、確認してください。</div>':row(rs,act);
+  const list=(a,f,e)=>a.length?a.map(f).join(''):`<p class="sub">${e}</p>`;
+  return `${back}<h1>フレンド</h1>
+  <div class="mycard"><label class="f fl" for="fnick" style="margin-top:0"><span>ニックネーム</span><span></span></label><div style="display:flex;gap:8px;align-items:flex-start"><textarea id="fnick" class="ta" rows="1" maxlength="20" style="flex:1;min-width:0" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()">${esc(m.name)}</textarea><button class="sm" style="margin-top:2px" onclick="friendsSaveName()">保存</button></div>
+  <label class="f" style="margin-top:14px">あなたのユーザーID</label><div class="idrow"><b class="idv">${dfmt(m.code)}</b><button class="sm" onclick="copyId()">${ic('copy',16)} コピー</button></div><p class="sub" style="margin-top:6px">このIDを知っている人だけが、あなたを検索できます。信頼できる人にだけ、教えてください。</p></div>
+  <h2>ユーザーIDで探す</h2><p class="sub">相手のユーザーID(10桁)を、正確に入力してください。入力しないかぎり、だれも表示されません。</p>
+  <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="fid" inputmode="numeric" autocomplete="off" style="flex:1;min-width:0" placeholder="例:123-456-7890" value="${fp(FS.q||'')}" oninput="fidIn(this)" onkeydown="if(event.key==='Enter')friendsFind()"><button class="sm" onclick="friendsFind()">検索</button></div>${res}
+  <h2>届いた申請${L.incoming.length?'('+L.incoming.length+')':''}</h2>${list(L.incoming,x=>row(x,`<button class="sm" onclick="friendsAccept('${x.id}')">承認</button><button class="sm gh" onclick="friendsReject('${x.id}')">断る</button>`),'届いている申請はありません。')}
+  <h2>送った申請${L.outgoing.length?'('+L.outgoing.length+')':''}</h2>${list(L.outgoing,x=>row(x,`<button class="sm gh" onclick="friendsCancel('${x.id}')">取り消す</button>`),'送った申請はありません。')}
+  <h2>フレンド${L.friends.length?'('+L.friends.length+')':''}</h2>${list(L.friends,x=>row(x,`<button class="sm dg" data-n="${esc(x.name)}" onclick="friendsRemove('${x.uid}',this.dataset.n)">解除</button>`),'まだフレンドがいません。')}
+  <p class="sub" style="margin-top:14px">フレンドになった相手とは、あとで、グッズ情報を共有できるようになります(共有機能は準備中です)。</p>
+  <details class="demo"><summary>デモ用の操作(お試し用)</summary><p class="sub" style="margin-top:8px">本物の機能では、相手の操作は、相手のスマホから行われます。ここでは、その動きをまねできます。</p><div class="row2"><button class="sm gh" onclick="demoAct('incoming')">相手から申請が届く</button><button class="sm gh" onclick="demoAct('accept')">送った申請を相手が承認</button><button class="sm gh" onclick="demoAct('reset')">デモのデータを消す</button></div></details>
+  <button class="pri ghost" onclick="friendsLogout()">ログアウト</button>`},
 trash(){const gs=items.filter(i=>i.del),fs=folders.filter(f=>f.del&&f.delTop),T=trTab;
   const rows=[...(T!=='folder'?gs.map(i=>({d:i.del,i})):[]),...(T!=='goods'?fs.map(f=>({d:f.del,f})):[])].sort((a,b)=>b.d-a.d);
   const tabs=[['all','全部',gs.length+fs.length],['goods','グッズ画像',gs.length],['folder','フォルダ',fs.length]];
@@ -282,18 +308,18 @@ trash(){const gs=items.filter(i=>i.del),fs=folders.filter(f=>f.del&&f.delTop),T=
 wish(){return `<div class="hdr"><h1>購入予定リスト</h1><button class="bell" onclick="pickSheet('wish')" aria-label="購入予定を追加">${ic('plus',20)}</button></div><p class="sub">欲しいグッズをチェック。買ったらタップして所持に移せます。</p><div style="height:12px"></div>${list(wish(),'購入予定はありません。<br>右上の＋から、写真を撮るか画像を選んで追加できます。')}`},
 theme(){return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>テーマ</h1><p class="sub">アプリ全体の色合いを選べます。選んだら「適用」を押してください。</p><div class="swg">${T.map((t,i)=>`<button class="sw ${pend===i?'on':''}" onclick="pickT(${i})" aria-pressed="${pend===i}"><i style="background:${t.sw||pal(t,isDark()).pk};color:${t.sw==='#fff'?'#333':pal(t,isDark()).on}">${pend===i?ic('check',20):''}</i><span>${t.n}${cur===i?'<br>(使用中)':''}</span></button>`).join('')}</div><button class="pri" onclick="applyBtn()" ${pend===cur?'disabled':''}>適用</button>`},
 notice(){return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>お知らせ</h1><div class="empty">お知らせはありません。<br>アプリの更新情報などが届くと、ここに表示されます。</div>`},
-acc(){return `<button class="bk" onclick="openSet()">‹ 設定</button><h1>アカウント</h1><div class="rb" style="opacity:.55"><span>Googleアカウントと連携</span><small>準備中</small></div>`},
+acc(){return `<button class="bk" onclick="openSet()">‹ 設定</button><h1>アカウント</h1><button class="rb" onclick="go('friends')"><span>Googleアカウントでログイン</span><small>${FS.me?'ログイン中(デモ)':'デモ'} ›</small></button>`},
 set(){const o=[['auto','端末に合わせる','スマホの設定に合わせて切り替わります。'],['light','ライトモード','明るい配色で表示します。'],['dark','ダークモード','暗い配色で表示します。']];
 return `<button class="bk" onclick="go('me')">‹ マイページ</button><h1>設定</h1><button class="rb" onclick="go('acc')"><span>${ic('user',20)} アカウント</span><small>›</small></button><h2>表示モード</h2>${o.map(([k,n,d])=>`<button class="rb" onclick="pickM('${k}')" aria-pressed="${pm===k}"><span>${n}${mode===k?'(使用中)':''}<br><small>${d}</small></span><b style="color:var(--ac)">${pm===k?ic('check',20):''}</b></button>`).join('')}<p class="sub" style="margin:10px 0 0">ライトはパステル、ダークはダスティな色合いになります。白と黒のテーマは変わりません。</p><button class="pri" onclick="applyMode()" ${pm===mode?'disabled':''}>適用</button>`},
 find(){return `<h1>検索</h1><textarea id="q" class="ta" rows="1" placeholder="商品名・キャラ名・作品名など" oninput="ag(this);doFind(this.value)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><div id="sr" style="margin-top:12px"></div>`},
-me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length+folders.filter(f=>f.del&&f.delTop).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
+me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="go('friends')"><span>${ic('users',20)} フレンド</span><small>${FS.l.incoming.length?'申請'+FS.l.incoming.length+'件 ':''}›</small></button><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length+folders.filter(f=>f.del&&f.delTop).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
 };
 function doFind(v){v=v.trim().toLowerCase();const r=v?live().filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
-function go(v){view=v;flt='';if(v==='trash')trTab='all';if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
+function go(v){view=v;flt='';if(v==='trash')trTab='all';if(v==='friends'){FS.res=undefined;FS.q='';friendsLoad()}if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
 function render(){
   $('#m').innerHTML=V[view]();
   const t=[['home','home','ホーム'],['col','folder','コレクション'],['cam','camera',''],['wish','bag','購入予定'],['me','user','マイページ']];
-  $('#nav').innerHTML=t.map(([k,e,l])=>k==='cam'?`<button class="fab" onclick="check()" aria-label="カメラで所持確認"><em>${ic(e,k==='cam'?26:22)}</em></button>`:`<button class="${view===k||(k==='me'&&(view==='theme'||view==='set'||view==='acc'||view==='notice'||view==='trash'))?'on':''}" onclick="go('${k}')"><em>${ic(e,k==='cam'?26:22)}</em>${l}</button>`).join('');
+  $('#nav').innerHTML=t.map(([k,e,l])=>k==='cam'?`<button class="fab" onclick="check()" aria-label="カメラで所持確認"><em>${ic(e,k==='cam'?26:22)}</em></button>`:`<button class="${view===k||(k==='me'&&(view==='theme'||view==='set'||view==='acc'||view==='notice'||view==='trash'||view==='friends'))?'on':''}" onclick="go('${k}')"><em>${ic(e,k==='cam'?26:22)}</em>${l}</button>`).join('');
 }
 
 /* ---- シート ---- */
@@ -505,7 +531,53 @@ function shoot(){const v=$('#cv');if(!v||!v.videoWidth)return;
   c.toBlob(b=>{if(!b)return;closeCam();picked(new File([b],'cam.jpg',{type:'image/jpeg'}),meta)},'image/jpeg',.9)}
 addEventListener('keydown',e=>{if($('#cam')&&(e.key==='AudioVolumeDown'||e.code==='AudioVolumeDown')){e.preventDefault();shoot()}});
 
-const APP_VER='v1.16(11/15 点検・見やすさと画像の修正)';
+/* ---- フレンド(デモ版:この端末の中だけで動くお試し) ---- */
+const DK='oshi-demo-cloud';
+const dnorm=s=>String(s||'').normalize('NFKC').replace(/\D/g,'');
+const fp=dg=>dg.replace(/^(\d{3})(\d{0,3})(\d{0,4})$/,(m,a,b,c)=>a+(b?'-'+b:'')+(c?'-'+c:''));
+const dfmt=c=>fp(String(c));
+function dload(){let d=null;try{d=JSON.parse(localStorage.getItem(DK)||'null')}catch(e){}
+  if(!d||!d.users)d={me:null,users:{s1:{name:'さくら',code:'4829153306'},s2:{name:'ゆうと',code:'7362041859'},s3:{name:'みお',code:'1958472630'}},req:[],fr:[]};
+  return d}
+function dsave(d){try{localStorage.setItem(DK,JSON.stringify(d))}catch(e){}}
+function dcode(d){const u=new Set(Object.values(d.users).map(x=>x.code));let c;do{c=String(1e9+Math.floor(Math.random()*9e9))}while(u.has(c));return c}
+const dpair=(d,a,b)=>d.fr.some(q=>(q[0]===a&&q[1]===b)||(q[0]===b&&q[1]===a));
+function drel(d,a,b){if(a===b)return{rel:'self'};if(dpair(d,a,b))return{rel:'friend'};
+  const x=d.req.find(r=>r.from===a&&r.to===b);if(x)return{rel:'sent',reqId:x.id};
+  const y=d.req.find(r=>r.from===b&&r.to===a);if(y)return{rel:'received',reqId:y.id};return{rel:'none'}}
+const dinfo=(d,u)=>({uid:u,name:d.users[u].name,code:d.users[u].code});
+const Cloud={mode:'demo',
+  async me(){const d=dload();return d.me&&d.users[d.me]?dinfo(d,d.me):null},
+  async signIn(){const d=dload();if(!d.me||!d.users[d.me]){if(d.last&&d.users[d.last]){d.me=d.last}else{const id='me'+uid();d.users[id]={name:'ユーザー',code:dcode(d)};d.me=id}dsave(d)}return this.me()},
+  async signOut(){const d=dload();if(d.me)d.last=d.me;d.me=null;dsave(d)},
+  async setName(n){const d=dload();if(d.me&&d.users[d.me]){d.users[d.me].name=n;dsave(d)}},
+  async find(code){const d=dload();if(!d.me)return null;const u=Object.keys(d.users).find(k=>d.users[k].code===code);if(!u)return null;return{...dinfo(d,u),...drel(d,d.me,u)}},
+  async send(to){const d=dload();const r=drel(d,d.me,to);if(r.rel!=='none')return r.rel;d.req.push({id:uid(),from:d.me,to,at:Date.now()});dsave(d);return 'ok'},
+  async cancel(id){const d=dload();d.req=d.req.filter(r=>!(r.id===id&&r.from===d.me));dsave(d)},
+  async respond(id,ok){const d=dload();const r=d.req.find(x=>x.id===id&&x.to===d.me);if(!r)return;d.req=d.req.filter(x=>x.id!==id);if(ok&&!dpair(d,r.from,r.to))d.fr.push([r.from,r.to]);dsave(d)},
+  async remove(u){const d=dload();d.fr=d.fr.filter(q=>!((q[0]===d.me&&q[1]===u)||(q[1]===d.me&&q[0]===u)));dsave(d)},
+  async list(){const d=dload();if(!d.me)return{incoming:[],outgoing:[],friends:[]};
+    return{incoming:d.req.filter(r=>r.to===d.me).map(r=>({id:r.id,...dinfo(d,r.from)})),outgoing:d.req.filter(r=>r.from===d.me).map(r=>({id:r.id,...dinfo(d,r.to)})),friends:d.fr.filter(q=>q.includes(d.me)).map(q=>dinfo(d,q[0]===d.me?q[1]:q[0]))}},
+  async demo(kind){const d=dload();if(kind==='reset'){try{localStorage.removeItem(DK)}catch(e){}return}if(!d.me)return;
+    if(kind==='accept'){const r=d.req.find(x=>x.from===d.me);if(r){d.req=d.req.filter(x=>x!==r);d.fr.push([r.from,r.to])}}
+    else if(kind==='incoming'){const c=Object.keys(d.users).filter(k=>k!==d.me&&drel(d,d.me,k).rel==='none');if(c.length)d.req.push({id:uid(),from:c[0],to:d.me,at:Date.now()})}
+    dsave(d)}};
+let FS={me:null,l:{incoming:[],outgoing:[],friends:[]},res:undefined,q:''};
+async function friendsLoad(){FS.me=await Cloud.me();FS.l=FS.me?await Cloud.list():{incoming:[],outgoing:[],friends:[]};if(FS.res&&FS.res.code)FS.res=(await Cloud.find(FS.res.code))||{none:true};if(view==='friends'||view==='me')render()}
+async function friendsLogin(){await Cloud.signIn();await friendsLoad();toast('ログインしました(デモ)')}
+function friendsLogout(){confirmDlg('ログアウトしますか？<br><small>デモのデータは、この端末に残ります。</small>',async()=>{await Cloud.signOut();FS.res=undefined;FS.q='';await friendsLoad()},'完了')}
+async function friendsSaveName(){const n=($('#fnick').value||'').trim().slice(0,20)||'ユーザー';await Cloud.setName(n);await friendsLoad();toast('ニックネームを保存しました')}
+function fidIn(el){const dg=dnorm(el.value).slice(0,10);FS.q=dg;el.value=fp(dg)}
+async function friendsFind(){const c=dnorm(FS.q);if(c.length!==10){toast('ユーザーIDは10桁の数字です');return}FS.res=(await Cloud.find(c))||{none:true};render()}
+async function friendsSend(u){const r=await Cloud.send(u);toast(r==='ok'?'フレンド申請を送りました':r==='friend'?'すでにフレンドです':r==='sent'?'すでに申請済みです':'相手から申請が届いています。承認してください');await friendsLoad()}
+async function friendsCancel(id){await Cloud.cancel(id);await friendsLoad();toast('申請を取り消しました')}
+async function friendsAccept(id){await Cloud.respond(id,true);await friendsLoad();toast('フレンドになりました')}
+async function friendsReject(id){await Cloud.respond(id,false);await friendsLoad();toast('申請を断りました')}
+function friendsRemove(u,name){confirmDlg('「'+esc(name)+'」とのフレンドを解除しますか？<br><small>お互いのフレンド一覧から消えます。</small>',async()=>{await Cloud.remove(u);await friendsLoad();toast('フレンドを解除しました')},'完了',1)}
+async function copyId(){const c=FS.me&&FS.me.code;if(!c)return;try{await navigator.clipboard.writeText(c);toast('ユーザーIDをコピーしました')}catch(e){const t=document.createElement('textarea');t.value=c;document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}t.remove();toast(ok?'ユーザーIDをコピーしました':'コピーできませんでした')}}
+async function demoAct(k){if(k==='reset'){confirmDlg('デモのデータをすべて消しますか？<br><small>ログインも解除されます。</small>',async()=>{await Cloud.demo('reset');FS.res=undefined;FS.q='';await friendsLoad();toast('デモのデータを消しました')},'完了',1);return}
+  const had=FS.l.outgoing.length;await Cloud.demo(k);await friendsLoad();toast(k==='accept'?(had?'(デモ)相手が承認しました':'送った申請がありません'):'(デモ)相手から申請が届きました')}
+const APP_VER='v1.17(11/18 フレンド機能(デモ版))';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -519,6 +591,8 @@ palette:'<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2.2-2.5 1.6-2.5H17a4
 gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
 bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
 gift:'<path d="M3 9h18v3H3z"/><path d="M5 12v8h14v-8M12 9v11"/><path d="M12 9c-1-4-5-4-5-2s3 2 5 2zm0 0c1-4 5-4 5-2s-3 2-5 2z"/>',
+users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.8 0 4.5 1.8 4.5 4.5"/>',
+copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
 trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
 more:'<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',
 folderplus:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v6M9 14h6"/>',
@@ -552,5 +626,5 @@ function applyMode(){if(pm===mode)return;const d=document.createElement('div');d
 function applyBtn(){if(pend===cur)return;const d=document.createElement('div');d.className='ld';d.setAttribute('role','status');d.innerHTML='<div class="sp"></div><div>テーマを変更しています…</div>';document.body.appendChild(d);
   setTimeout(()=>{cur=pend;applyT(cur);try{localStorage.setItem('oshi-theme2',cur)}catch(e){}render();d.remove()},1000)}
 
-(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();items.filter(i=>i.name==='(名前なし)'&&!i.del).sort((a,b)=>a.at-b.at).forEach(i=>{i.name=nextUntitled();put(i)});render()})();
+(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();friendsLoad();items.filter(i=>i.name==='(名前なし)'&&!i.del).sort((a,b)=>a.at-b.at).forEach(i=>{i.name=nextUntitled();put(i)});render()})();
 </script></body></html>
