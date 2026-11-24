@@ -134,6 +134,23 @@ input[type=number]::placeholder{color:var(--sub);opacity:.75}
 .sm{flex:none;padding:9px 12px;border-radius:99px;background:var(--pk);color:var(--on);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:4px}.sm.gh{background:var(--pk2);color:var(--tx);font-weight:400}.sm.dg{background:none;color:#e5484d;font-weight:400;border:1px solid #e5484d}.sm .ic{margin:0}
 .tg{flex:none;font-size:12px;color:var(--sub);padding:6px 10px;border-radius:99px;background:var(--pk2)}
 details.demo{margin-top:16px;background:var(--card);border-radius:14px;padding:10px 14px;font-size:13px}details.demo summary{cursor:pointer;color:var(--sub)}details.demo .row2{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pgtabs{display:flex;gap:6px;background:var(--card);border-radius:14px;padding:4px;margin-bottom:10px;box-shadow:0 2px 10px var(--sh)}.pgtabs button{flex:1;padding:9px 6px;border-radius:11px;background:none;color:var(--sub);font-size:14px}.pgtabs .on{background:var(--pk);color:var(--on);font-weight:700}
+.pgw{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;align-items:flex-start;overscroll-behavior-x:contain}.pgw::-webkit-scrollbar{display:none}
+.pg{flex:none;width:100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cx{display:flex;flex-direction:column;gap:3px;text-align:left;background:none;min-width:0;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.cim{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--pk2);display:grid;place-items:center;box-shadow:0 2px 10px var(--sh)}.cim img{width:100%;height:100%;object-fit:cover}
+.cnm{padding:8px;font-size:13px;font-weight:700;color:var(--ac);text-align:center;overflow-wrap:anywhere;line-height:1.35}
+.cx:not(.own) .cim{filter:grayscale(1);opacity:.5}
+.cx b{font-size:11.5px;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cx small{font-size:11px;color:var(--sub)}.cx.own small{color:var(--ac);font-weight:700}
+.cbd{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:2px solid #fff;background:rgba(0,0,0,.3);color:#fff}.cx.own .cbd{background:var(--pk);border-color:var(--pk);color:var(--on)}.cbd .ic{margin:0}
+.cim .ck{top:6px;left:6px}
+.cx.sl .cim{outline:3px solid var(--pk);outline-offset:-3px}
+.prog{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:10px 12px;margin-top:8px;box-shadow:0 2px 10px var(--sh)}.prog .pb{flex:1;height:10px;border-radius:99px;background:var(--pk2);overflow:hidden}.prog .pb i{display:block;height:100%;background:var(--pk);border-radius:99px}.prog b{font-size:13px}.prog small{color:var(--sub);font-size:12px}
+.cpv{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.cpv img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}.cpv span{display:grid;place-items:center;font-size:13px;color:var(--sub)}
+.selb .row3{display:flex;gap:8px}.selb .row3 .pri{margin-top:0;flex:1;padding:12px 8px}.selb .row3 .ghost{background:var(--card)}
+.selb .row3 .pri{white-space:nowrap;font-size:13px;padding:12px 6px}.selb .row3 .pri .ic{margin-right:3px}
 </style></head><body>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -281,6 +298,23 @@ col(){const sp=cf==='all'||cf==='unsorted';const f=!sp&&cf?fById(cf):null;if(cf&
   else{const ks=kids(cf);body=(ks.length?`<h2>フォルダ</h2><div class="fg">${ks.map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`:'')+'<h2>グッズ</h2>'+itemsGrid(L.filter(i=>inF(i,cf)),'このフォルダには、まだグッズがありません。グッズを長押しして選び、「フォルダに追加・移動」から入れられます。')}
   const bars=selMode?`<div class="selt"><button onclick="selOff()" aria-label="選択をやめる">${ic('x',18)}</button><b>${sel.size}件を選択中</b><button class="selall" onclick="selAll()">すべて選択</button></div><div class="selb"><button class="pri" onclick="selFold()">${ic('folder',18)} フォルダに追加・移動</button></div>`:'';
   return `${back}${hd}${body}${bars}`},
+chk(){const sp=ckf==='all'||ckf==='un',f=!sp&&ckf?ckBy(ckf):null;if(ckf&&!sp&&!f)ckf=null;
+  const back=ckf===null?'':`<button class="bk" onclick="ckBack()">‹ ${sp||!f||!f.parent?'チェッカー':esc((ckBy(f.parent)||{}).name||'')}</button>`;
+  const title=sp?(ckf==='all'?'全てのチェック項目':'未分類'):f?esc(f.name):'チェッカー';
+  const hd=`<div class="hdr"><h1>${title}</h1><div class="hacts"><button class="bell" onclick="ckAddSheet()" aria-label="チェック項目を追加">${ic('plus',20)}</button><button class="bell" onclick="ckFnSheet()" aria-label="フォルダを作成">${ic('folderplus',20)}</button></div></div>`;
+  const sub=k=>{const c=ckCount(k.id);return '持ってる '+c[0]+'/'+c[1]+(ckKids(k.id).length?' ・ フォルダ'+ckKids(k.id).length:'')};
+  const tile=(id,n,t,c)=>`<div class="ftw"><button class="ft${c?' ftx':''}" onclick="ckOpen('${id}')">${ic('folder',26)}<b>${esc(n)}</b><small>${t}</small></button>${c?'':`<button class="fdots" onclick="ckFMenu(event,'${id}')" aria-label="フォルダのメニュー">${ic('more',18)}</button>`}</div>`;
+  let body='';
+  if(ckf===null){const o=checks.filter(i=>i.own).length;
+    body=checks.length?`<p class="sub">持っているものを、タップで切り替えられます。長押しで、まとめて選べます。</p><div class="fg" style="margin-top:12px">${tile('all','全てのチェック項目','持ってる '+o+'/'+checks.length,1)}${tile('un','未分類','持ってる '+checks.filter(ckUn).filter(i=>i.own).length+'/'+checks.filter(ckUn).length,1)}${ckKids(null).map(k=>tile(k.id,k.name,sub(k))).join('')}</div>`
+    :`<div class="empty" style="text-align:left;margin-top:12px"><b>チェッカーの使い方</b><br>① 右上の「＋」で、持っているか確認したいグッズを登録します。写真でも、名前だけでも作れます。<br>② 登録した項目をタップすると、「持ってない(灰色)」と「持ってる(色つき)」が切り替わります。<br>③ 項目を長押しすると、まとめて選んで、フォルダに分けられます。</div><button class="pri" onclick="ckAddSheet()">${ic('plus',18)} 最初の項目を追加する</button>`}
+  else{const L=ckList(),own=L.filter(i=>i.own).length,pct=L.length?Math.round(own/L.length*100):0,shown=cflt==='yes'?L.filter(i=>i.own):cflt==='no'?L.filter(i=>!i.own):L,ks=sp?[]:ckKids(ckf);
+    body=(ks.length?`<h2>フォルダ</h2><div class="fg">${ks.map(k=>tile(k.id,k.name,sub(k))).join('')}</div><h2>チェック項目</h2>`:'')
+      +`<div class="prog"><div class="pb"><i style="width:${pct}%"></i></div><b>持ってる ${own} / ${L.length}</b><small>${pct}%</small></div>`
+      +`<div class="chips"><button class="${cflt==='all'?'on':''}" onclick="ckFlt('all')">すべて(${L.length})</button><button class="${cflt==='no'?'on':''}" onclick="ckFlt('no')">持ってない(${L.length-own})</button><button class="${cflt==='yes'?'on':''}" onclick="ckFlt('yes')">持ってる(${own})</button></div>`
+      +(shown.length?`<div class="cgrid">${shown.map(ckTile).join('')}</div>`:`<div class="empty">${L.length?'この条件に合う項目はありません。':'まだ項目がありません。右上の「＋」から追加できます。'}</div>`)}
+  const bars=ckSelMode?`<div class="selt"><button onclick="ckOff()" aria-label="選択をやめる">${ic('x',18)}</button><b>${ckSel.size}件を選択中</b><button class="selall" onclick="ckAll()">すべて選択</button></div><div class="selb"><div class="row3"><button class="pri" onclick="ckFd([...ckSel])">${ic('folder',18)} フォルダ</button>${ckSel.size===1?`<button class="pri ghost" onclick="ckEditSel()">${ic('edit',18)} 編集</button>`:''}<button class="pri danger" style="border:1px solid #d6456b" onclick="ckAskDel()">${ic('trash',18)} 削除</button></div></div>`:'';
+  return `${back}${hd}${body}${bars}`},
 friends(){const back=`<button class="bk" onclick="go('me')">‹ マイページ</button>`;
   if(!FS.me)return `${back}<h1>フレンド</h1><p class="sub">ログインすると、自分のユーザーIDが発行されて、フレンドを追加できます。</p><div class="empty" style="margin-top:14px;text-align:left"><b>デモモードです</b><br>いまは、この端末の中だけで動く、お試し版です。本物のフレンド機能(ほかの人との申請・承認)には、サーバーとGoogleログインの設定が必要です。</div><button class="pri" onclick="friendsLogin()">Googleでログイン(デモ)</button>`;
   const L=FS.l,m=FS.me;
@@ -315,22 +349,22 @@ find(){return `<h1>検索</h1><textarea id="q" class="ta" rows="1" placeholder="
 me(){return `<div class="hdr"><h1>マイページ</h1><button class="bell" onclick="go('notice')" aria-label="お知らせ">${ic('bell',20)}</button></div><div class="st"><div><small>全グッズ</small><b>${items.length}</b><u>件</u></div></div><button class="rb" onclick="go('friends')"><span>${ic('users',20)} フレンド</span><small>${FS.l.incoming.length?'申請'+FS.l.incoming.length+'件 ':''}›</small></button><button class="rb" onclick="openTheme()"><span>${ic('palette',20)} テーマ</span><small>${T[cur].n} ›</small></button><button class="rb" onclick="openSet()"><span>${ic('gear',20)} 設定</span><small>表示モード ›</small></button><button class="rb" onclick="go('trash')"><span>${ic('trash',20)} ゴミ箱</span><small>${items.filter(i=>i.del).length+folders.filter(f=>f.del&&f.delTop).length}件 ›</small></button><div class="empty">${db?'データはこの端末のブラウザに保存されています。':'この環境では保存できないため、閉じるとデータが消えます。'}<br>バックアップ機能は今後追加予定です。</div><p class="sub" style="text-align:center;margin-top:16px">バージョン ${APP_VER}</p>`}
 };
 function doFind(v){v=v.trim().toLowerCase();const r=v?live().filter(i=>[i.name,i.work,i.chara,i.genre,i.shop,i.period,i.price,i.size,i.memo].join(' ').toLowerCase().includes(v)):[];$('#sr').innerHTML=v?list(r,'見つかりませんでした。'):''}
-function go(v){view=v;flt='';if(v==='trash')trTab='all';if(v==='friends'){FS.res=undefined;FS.q='';friendsLoad()}if(v==='col'){cf=null;selMode=false;sel.clear()}render();scrollTo(0,0)}
+function go(v){view=v;flt='';if(v==='trash')trTab='all';if(v==='friends'){FS.res=undefined;FS.q='';friendsLoad()}if(v==='col'){cf=null;selMode=false;sel.clear();ckf=null;ckSelMode=false;ckSel.clear()}render();scrollTo(0,0)}
 function render(){
-  $('#m').innerHTML=V[view]();
+  $('#m').innerHTML=view==='col'?pagerHTML():V[view]();if(view==='col')pgSetup();
   const t=[['home','home','ホーム'],['col','folder','コレクション'],['cam','camera',''],['wish','bag','購入予定'],['me','user','マイページ']];
   $('#nav').innerHTML=t.map(([k,e,l])=>k==='cam'?`<button class="fab" onclick="check()" aria-label="カメラで所持確認"><em>${ic(e,k==='cam'?26:22)}</em></button>`:`<button class="${view===k||(k==='me'&&(view==='theme'||view==='set'||view==='acc'||view==='notice'||view==='trash'||view==='friends'))?'on':''}" onclick="go('${k}')"><em>${ic(e,k==='cam'?26:22)}</em>${l}</button>`).join('');
 }
 
 /* ---- シート ---- */
 function sheet(h,hx){const S=$('#S');S.innerHTML=`<div class="sh"><div class="hd">${hx||''}<button onclick="closeS()" aria-label="閉じる">${ic('x',16)}</button></div>${h}</div>`;S.className='on'}
-function closeS(){$('#S').className='';armed=false;if(rp){rp=null;if(rpF){folders=JSON.parse(rpF);saveF()}rpF=null;fdReg=false}}
+function closeS(){$('#S').className='';armed=false;ckTo='';if(rp){rp=null;if(rpF){folders=JSON.parse(rpF);saveF()}rpF=null;fdReg=false}}
 /* ---- 画像選択 → 確認画面 ---- */
 let rmode='check',kw='';
 const PT={check:['カメラで所持確認','登録済みのグッズから、同じものを探します。'],add:['グッズを登録','まず、登録済みに同じものがないか確認します。'],wish:['購入予定を追加','まず、すでに持っていないか確認します。']};
 function pickSheet(m){rmode=m;sheet(`<h2 style="margin-top:0">${PT[m][0]}</h2><p class="sub">${PT[m][1]}</p>${camBtn()}<label class="btn ghost">${ic('image',18)} 画像を選ぶ<input type="file" accept="image/*" hidden onchange="picked(this.files[0])"></label>${camBlocked?noteHTML():''}`)}
 function check(){pickSheet('check')}
-async function picked(f,meta){if(!f)return;try{tmp=await proc(f)}catch(e){sheet('<div class="empty">画像を読み込めませんでした。別の画像で試してください。</div>');return}tmp.genre=(meta&&meta.genre)||'';tmp.text=!!(meta&&meta.text);kw='';review()}
+async function picked(f,meta){if(!f)return;if(ckTo==='chk')return ckPickMany([f]);try{tmp=await proc(f)}catch(e){sheet('<div class="empty">画像を読み込めませんでした。別の画像で試してください。</div>');return}tmp.genre=(meta&&meta.genre)||'';tmp.text=!!(meta&&meta.text);kw='';review()}
 const norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[!?！？「」『』()（）\[\]【】\-_~〜]+/g,'');
 function grams(s,uni){const g=new Set();String(s||'').split(/[\s\u3000、。,.・\/|]+/).forEach(w=>{const t=norm(w);if(t.length===1)g.add(t);for(let i=0;i<t.length-1;i++)g.add(t.slice(i,i+2));if(uni)for(const c of t)g.add(c)});return g}
 function kwScore(q,i){const Q=grams(q);if(!Q.size)return 0;const D=grams([i.name,i.work,i.chara,i.memo,i.genre,i.shop,i.period,i.price,i.size].join('|'),1);let m=0;Q.forEach(x=>{if(D.has(x))m++});return m/Q.size}
@@ -577,7 +611,61 @@ function friendsRemove(u,name){confirmDlg('「'+esc(name)+'」とのフレンド
 async function copyId(){const c=FS.me&&FS.me.code;if(!c)return;try{await navigator.clipboard.writeText(c);toast('ユーザーIDをコピーしました')}catch(e){const t=document.createElement('textarea');t.value=c;document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}t.remove();toast(ok?'ユーザーIDをコピーしました':'コピーできませんでした')}}
 async function demoAct(k){if(k==='reset'){confirmDlg('デモのデータをすべて消しますか？<br><small>ログインも解除されます。</small>',async()=>{await Cloud.demo('reset');FS.res=undefined;FS.q='';await friendsLoad();toast('デモのデータを消しました')},'完了',1);return}
   const had=FS.l.outgoing.length;await Cloud.demo(k);await friendsLoad();toast(k==='accept'?(had?'(デモ)相手が承認しました':'送った申請がありません'):'(デモ)相手から申請が届きました')}
-const APP_VER='v1.17(11/18 フレンド機能(デモ版))';
+/* ---- チェッカー(持ってる/持ってないの確認表) ---- */
+let checks=[],cfolders=[],ckf=null,ckSelMode=false,ckSel=new Set(),cflt='all',ckTo='',pgn=0,ckImgs=[],ckIds=[],ckEImg=null,pgT=0;
+function ckLoadF(){try{cfolders=JSON.parse(localStorage.getItem('oshi-cfolders')||'[]')}catch(e){cfolders=[]}}
+function ckSaveF(){try{localStorage.setItem('oshi-cfolders',JSON.stringify(cfolders))}catch(e){}}
+const ckKids=p=>cfolders.filter(f=>f.parent===p),ckBy=id=>cfolders.find(f=>f.id===id),ckIn=(i,id)=>(i.folders||[]).includes(id),ckUn=i=>!(i.folders||[]).some(id=>ckBy(id));
+function ckDesc(id){const r=[id];ckKids(id).forEach(k=>r.push(...ckDesc(k.id)));return r}
+function ckCount(id){const d=new Set(ckDesc(id)),a=checks.filter(i=>(i.folders||[]).some(x=>d.has(x)));return[a.filter(i=>i.own).length,a.length]}
+function ckFlat(p=null,d=0){return ckKids(p).flatMap(f=>[{f,d},...ckFlat(f.id,d+1)])}
+const ckList=()=>ckf==='all'?checks:ckf==='un'?checks.filter(ckUn):ckf?checks.filter(i=>ckIn(i,ckf)):[];
+const ckName=i=>i.name||'名前なし';
+function ckRender(){const e=$('#pg2');if(e)e.innerHTML=V.chk();else render()}
+function ckOpen(id){ckf=id;ckSelMode=false;ckSel.clear();cflt='all';ckRender();scrollTo(0,0)}
+function ckBack(){const f=ckBy(ckf);ckf=(ckf==='all'||ckf==='un'||!f)?null:f.parent;ckSelMode=false;ckSel.clear();ckRender();scrollTo(0,0)}
+function ckFlt(k){cflt=k;ckRender()}
+function ckOff(){ckSelMode=false;ckSel.clear();ckRender()}
+function ckAll(){ckList().forEach(i=>ckSel.add(i.id));ckRender()}
+function ckTap(id){if(lpF){lpF=0;return}if(ckSelMode){ckSel.has(id)?ckSel.delete(id):ckSel.add(id);if(!ckSel.size)ckSelMode=false;ckRender();return}
+  const i=checks.find(x=>x.id===id);if(!i)return;i.own=!i.own;put(i);ckRender();toast('「'+ckName(i)+'」を'+(i.own?'持ってる':'持ってない')+'にしました')}
+const ckTile=i=>{const s=ckSel.has(i.id);return `<button class="cx${i.own?' own':''}${s?' sl':''}" data-cid="${i.id}" onclick="ckTap('${i.id}')" oncontextmenu="return false"><div class="cim">${i.img?`<img src="${i.img}" alt="">`:`<span class="cnm">${esc(ckName(i))}</span>`}${ckSelMode?`<span class="ck${s?' on':''}">${s?ic('check',14):''}</span>`:`<span class="cbd">${i.own?ic('check',14):''}</span>`}</div>${i.img?`<b>${esc(ckName(i))}</b>`:''}<small>${i.own?'持ってる':'持ってない'}</small></button>`};
+document.addEventListener('pointerdown',e=>{const c=e.target.closest&&e.target.closest('.cx[data-cid]');if(!c||view!=='col')return;clearTimeout(lpT);lpF=0;lpX=e.clientX;lpY=e.clientY;lpT=setTimeout(()=>{lpF=1;ckSelMode=true;ckSel.add(c.dataset.cid);ckRender();try{navigator.vibrate&&navigator.vibrate(15)}catch(x){}},500)});
+/* 追加 */
+function ckAddSheet(){ckTo='chk';sheet(`<h2 style="margin-top:0">チェッカーに追加</h2><p class="sub">持っているか確認したいグッズを、自分で登録します。写真がなくても、名前だけで作れます。</p>${camBtn()}<label class="btn ghost">${ic('image',18)} 画像を選ぶ(まとめて選べます)<input type="file" accept="image/*" multiple hidden onchange="ckPickMany(this.files)"></label><button class="btn ghost" onclick="ckNamesSheet()">${ic('edit',18)} 名前だけで追加</button>${camBlocked?noteHTML():''}`)}
+async function ckImg(file){const url=URL.createObjectURL(file);const im=await new Promise((ok,ng)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ng;i.src=url});const sc=Math.min(1,360/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*sc));c.height=Math.max(1,Math.round(im.naturalHeight*sc));c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);return c.toDataURL('image/jpeg',.78)}
+async function ckPickMany(files){ckTo='';const fs=[...files].filter(Boolean);if(!fs.length)return;const imgs=[];for(const f of fs){try{imgs.push(await ckImg(f))}catch(e){}}if(!imgs.length){toast('画像を読み込めませんでした');return}ckImgs=imgs;ckForm()}
+function ckForm(){const n=ckImgs.length;sheet(`<h2 style="margin-top:0">${n>1?n+'枚をまとめて追加':'チェッカーに追加'}</h2>${n===1?`<img class="pv" src="${ckImgs[0]}" alt="">`:`<div class="cpv">${ckImgs.slice(0,12).map(x=>`<img src="${x}" alt="">`).join('')}${n>12?`<span>＋${n-12}</span>`:''}</div>`}${n===1?`<label class="f fl" for="ckn"><span>名前(なくてもOK)</span><span id="c-ckn">0/100</span></label><textarea id="ckn" class="ta" rows="1" maxlength="100" placeholder="例:ユキ 缶バッジ" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea>`:'<p class="sub" style="margin-top:8px">名前は、あとから1つずつ付けられます。</p>'}<label class="f"><input type="checkbox" id="cko"> ${n>1?'全部「持ってる」にする':'「持ってる」にする'}</label><button class="pri" onclick="ckSaveNew()">追加する</button>`)}
+function ckCurFolder(){return ckf&&ckf!=='all'&&ckf!=='un'&&ckBy(ckf)?[ckf]:[]}
+function ckSaveNew(){const nm=($('#ckn')&&$('#ckn').value.trim())||'',own=$('#cko').checked,t=Date.now(),n=ckImgs.length;ckImgs.forEach((img,k)=>{const i={id:uid(),kind:'chk',name:n===1?nm:'',img,own,folders:ckCurFolder(),at:t+k};checks.push(i);put(i)});ckImgs=[];closeS();pgn=1;render();toast(n+'件を追加しました')}
+function ckNamesSheet(){ckTo='';sheet(`<h2 style="margin-top:0">名前だけで追加</h2><p class="sub">1行に1つずつ書くと、まとめて作れます。(1行100文字まで)</p><label class="f" for="ckl">名前の一覧</label><textarea id="ckl" class="ta" rows="5" placeholder="例:&#10;ユキ 缶バッジ&#10;ハル 缶バッジ&#10;集合ビジュアル ポスター" oninput="ag(this)"></textarea><label class="f"><input type="checkbox" id="cko"> 全部「持ってる」にする</label><button class="pri" onclick="ckSaveNames()">追加する</button>`);const t=$('#ckl');if(t)t.focus()}
+function ckSaveNames(){const ls=($('#ckl').value||'').split(/\n/).map(x=>x.trim().slice(0,100)).filter(Boolean).slice(0,200);if(!ls.length){toast('名前を入力してください');return}const own=$('#cko').checked,t=Date.now();ls.forEach((name,k)=>{const i={id:uid(),kind:'chk',name,img:'',own,folders:ckCurFolder(),at:t+k};checks.push(i);put(i)});closeS();pgn=1;render();toast(ls.length+'件を追加しました')}
+/* 編集・削除 */
+function ckEdit(id){const i=checks.find(x=>x.id===id);if(!i)return;ckEImg=undefined;sheet(`<h2 style="margin-top:0">チェック項目を編集</h2><div id="cke">${i.img?`<img class="pv" src="${i.img}" alt="">`:''}</div><label class="btn ghost">${ic('image',18)} 画像を${i.img?'変える':'つける'}<input type="file" accept="image/*" hidden onchange="ckEditPick(this.files[0])"></label>${i.img?`<button class="btn ghost" onclick="ckEImg='';$('#cke').innerHTML=''">画像を外す</button>`:''}<label class="f fl" for="ckn"><span>名前</span><span id="c-ckn">0/100</span></label><textarea id="ckn" class="ta" rows="1" maxlength="100" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()">${esc(i.name)}</textarea><label class="f"><input type="checkbox" id="cko"${i.own?' checked':''}> 「持ってる」</label><button class="pri" onclick="ckSaveEdit('${i.id}')">保存する</button><button class="pri ghost" onclick="closeS()">キャンセル</button>`);const t=$('#ckn');if(t)ag(t)}
+async function ckEditPick(f){if(!f)return;try{ckEImg=await ckImg(f);$('#cke').innerHTML=`<img class="pv" src="${ckEImg}" alt="">`}catch(e){toast('画像を読み込めませんでした')}}
+function ckSaveEdit(id){const i=checks.find(x=>x.id===id);if(!i)return;i.name=$('#ckn').value.trim();i.own=$('#cko').checked;if(ckEImg!==undefined)i.img=ckEImg;put(i);ckEImg=undefined;closeS();ckOff();toast('保存しました')}
+function ckAskDel(){const ids=[...ckSel];if(!ids.length)return;confirmDlg(ids.length+'件のチェック項目を削除しますか？<br><small>この操作は元に戻せません。</small>',()=>{checks=checks.filter(x=>!ids.includes(x.id));ids.forEach(id=>del(id));ckSelMode=false;ckSel.clear();ckRender();toast('削除しました')},'完了',1)}
+function ckEditSel(){const ids=[...ckSel];if(ids.length===1)ckEdit(ids[0])}
+/* フォルダ */
+function ckFnSheet(){sheet(`<h2 style="margin-top:0">新しいフォルダ</h2><label class="f fl" for="ckfn"><span>フォルダ名</span><span id="c-ckfn">0/50</span></label><textarea id="ckfn" class="ta" rows="1" maxlength="50" placeholder="例:星のしずく、2025年のくじ(空でも作成できます)" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><p class="sub" style="margin-top:6px">${ckCurFolder().length?'いま開いているフォルダの中に作ります。':'いちばん上の階層に作ります。'}名前は空でも作れます。</p><button class="pri" onclick="ckMake('')">作成</button><button class="pri ghost" onclick="closeS()">キャンセル</button>`)}
+function ckNextUntitled(){const u=new Set(cfolders.map(f=>(String(f.name).match(/^タイトル無しフォルダ(\d+)$/)||[])[1]).filter(Boolean).map(Number));let n=1;while(u.has(n))n++;return 'タイトル無しフォルダ'+n}
+function ckMake(mode){const n=($('#ckfn').value||'').trim()||ckNextUntitled(),id=uid();cfolders.push({id,name:n,parent:ckCurFolder()[0]||null,at:Date.now()});ckSaveF();if(mode==='fd'){ckIdsItems().forEach(i=>{i.folders=[...new Set([...(i.folders||[]),id])];put(i)});ckFdOpen()}else{closeS();ckRender()}}
+const ckIdsItems=()=>ckIds.map(id=>checks.find(x=>x.id===id)).filter(Boolean);
+function ckFdHTML(){const its=ckIdsItems();return ckFlat().map(({f,d})=>{const n=its.filter(i=>ckIn(i,f.id)).length,st=n&&n===its.length?'on':n?'mid':'';return `<button class="fr" style="padding-left:${12+d*18}px" onclick="ckFdTog('${f.id}')"><span class="cb ${st}">${st==='on'?ic('check',14):st==='mid'?'−':''}</span><span>${esc(f.name)}</span></button>`}).join('')||'<p class="sub">まだフォルダがありません。下のボタンで作れます。</p>'}
+function ckFd(ids){ckIds=ids;ckFdOpen()}
+function ckFdOpen(){sheet(`<h2 style="margin-top:0">フォルダに追加・移動</h2><p class="sub">チェックを付けるとフォルダに入り、外すとフォルダから出ます。項目自体は消えません。(${ckIdsItems().length}件)</p><div id="ckfdl" class="fdl">${ckFdHTML()}</div><button class="pri ghost" onclick="ckFdNew()">${ic('folderplus',18)} 新しくフォルダを作成する</button><button class="pri" onclick="ckFdDone()">完了</button>`)}
+function ckFdNew(){sheet(`<h2 style="margin-top:0">新しいフォルダ</h2><label class="f fl" for="ckfn"><span>フォルダ名</span><span id="c-ckfn">0/50</span></label><textarea id="ckfn" class="ta" rows="1" maxlength="50" placeholder="空でも作成できます" oninput="ag(this)" onkeydown="if(event.key==='Enter')event.preventDefault()"></textarea><button class="pri" onclick="ckMake('fd')">作成して追加</button><button class="pri ghost" onclick="ckFdOpen()">キャンセル</button>`)}
+function ckFdTog(fid){const its=ckIdsItems(),all=its.length&&its.every(i=>ckIn(i,fid));its.forEach(i=>{const a=i.folders||[];i.folders=all?a.filter(x=>x!==fid):[...new Set([...a,fid])];put(i)});const L=$('#ckfdl');if(L){const y=L.scrollTop;L.innerHTML=ckFdHTML();L.scrollTop=y}}
+function ckFdDone(){closeS();ckSelMode=false;ckSel.clear();ckRender()}
+function ckFMenu(e,id){e.stopPropagation();const old=$('#fmn');if(old){old.remove();return}const r=e.currentTarget.getBoundingClientRect(),m=document.createElement('div');m.id='fmn';m.className='mn';m.style.cssText='position:fixed;top:'+(r.bottom+4)+'px;right:'+Math.max(8,innerWidth-r.right)+'px;min-width:150px;z-index:9';m.innerHTML=`<button class="rd" onclick="ckAskDelF('${id}')">削除</button>`;document.body.appendChild(m);setTimeout(()=>document.addEventListener('click',()=>{const x=$('#fmn');if(x)x.remove()},{once:true}),0)}
+function ckAskDelF(id){const f=ckBy(id);if(!f)return;confirmDlg('フォルダ「'+esc(f.name)+'」を削除しますか？<br><small>中のフォルダも一緒に消えます。入っているチェック項目自体は消えません。</small>',()=>{const rm=new Set(ckDesc(id));cfolders=cfolders.filter(x=>!rm.has(x.id));checks.forEach(i=>{if((i.folders||[]).some(x=>rm.has(x))){i.folders=i.folders.filter(x=>!rm.has(x));put(i)}});ckSaveF();if(ckf&&!ckBy(ckf)&&ckf!=='all'&&ckf!=='un')ckf=null;ckRender();toast('フォルダを削除しました')},'完了',1)}
+/* 左右に切り替えるページ(コレクション / チェッカー) */
+function pagerHTML(){return `<div class="pgtabs"><button class="${pgn===0?'on':''}" onclick="pgGo(0)">コレクション</button><button class="${pgn===1?'on':''}" onclick="pgGo(1)">チェッカー</button></div><div class="pgw" id="pgw"><div class="pg" id="pg1">${V.col()}</div><div class="pg" id="pg2">${V.chk()}</div></div>`}
+function pgTabs(){document.querySelectorAll('.pgtabs button').forEach((b,i)=>b.classList.toggle('on',i===pgn));try{localStorage.setItem('oshi-pg',pgn)}catch(e){}}
+function pgReset(){const had=selMode||ckSelMode;selMode=false;sel.clear();ckSelMode=false;ckSel.clear();if(had)render()}
+function pgGo(n){pgn=n;pgReset();pgTabs();const w=$('#pgw');if(w)w.scrollTo({left:n*w.clientWidth,behavior:'smooth'});scrollTo(0,0)}
+function pgSetup(){const w=$('#pgw');if(!w)return;w.scrollLeft=pgn*w.clientWidth;w.addEventListener('scroll',()=>{clearTimeout(pgT);pgT=setTimeout(()=>{const n=Math.round(w.scrollLeft/w.clientWidth);if(n!==pgn){pgn=n;pgTabs();pgReset()}},90)},{passive:true})}
+const APP_VER='v1.18(11/20 チェッカー)';
 /* ---- アイコン ---- */
 const IP={
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -626,5 +714,5 @@ function applyMode(){if(pm===mode)return;const d=document.createElement('div');d
 function applyBtn(){if(pend===cur)return;const d=document.createElement('div');d.className='ld';d.setAttribute('role','status');d.innerHTML='<div class="sp"></div><div>テーマを変更しています…</div>';document.body.appendChild(d);
   setTimeout(()=>{cur=pend;applyT(cur);try{localStorage.setItem('oshi-theme2',cur)}catch(e){}render();d.remove()},1000)}
 
-(async()=>{try{db=await openDB();items=await loadAll()}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();friendsLoad();items.filter(i=>i.name==='(名前なし)'&&!i.del).sort((a,b)=>a.at-b.at).forEach(i=>{i.name=nextUntitled();put(i)});render()})();
+(async()=>{try{db=await openDB();const all=await loadAll();items=all.filter(i=>i.kind!=='chk');checks=all.filter(i=>i.kind==='chk').sort((a,b)=>a.at-b.at)}catch(e){db=null}items.sort((a,b)=>b.at-a.at);loadF();ckLoadF();try{pgn=localStorage.getItem('oshi-pg')==='1'?1:0}catch(e){}friendsLoad();items.filter(i=>i.name==='(名前なし)'&&!i.del).sort((a,b)=>a.at-b.at).forEach(i=>{i.name=nextUntitled();put(i)});render()})();
 </script></body></html>
